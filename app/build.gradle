@@ -1,3 +1,7 @@
+def getBuildTimestamp() {
+    return new Date().format('yyyyMMddHHmmss')
+}
+
 plugins {
     alias(libs.plugins.android.application)
 }
@@ -11,8 +15,8 @@ android {
         applicationId 'com.ditzzy.dsunext'
         minSdk 29
         targetSdk 36
-        versionCode 1
-        versionName '1.0'
+        versionCode 99
+        versionName "1.0.${getBuildTimestamp()}"
 
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
