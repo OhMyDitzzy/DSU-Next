@@ -286,15 +286,16 @@ public class MainActivity extends AppCompatActivity implements Shizuku.OnRequest
     }
 
     private void renderVisibility() {
-        boolean installing = currentInstallation.isInstalling();
-        boolean showSelection = checksPassed && !installing;
-        binding.installationSection.setVisibility(showSelection ? View.VISIBLE : View.GONE);
+       boolean installing = currentInstallation.isInstalling();
+       boolean showSelection = checksPassed && !installing;
+       binding.installationSection.setVisibility(showSelection ? View.VISIBLE : View.GONE);
+       binding.progressCard.setVisibility(installing ? View.VISIBLE : View.GONE);
 
-        if (showSelection && currentInstallation.installable) {
-            binding.fabInstall.show();
-        } else {
-            binding.fabInstall.hide();
-        }
+       if (showSelection && currentInstallation.installable) {
+          binding.fabInstall.show();
+       } else {
+          binding.fabInstall.hide();
+       }
     }
 
     private void renderFileRow(InstallationCardState state) {
