@@ -1,0 +1,57 @@
+plugins {
+    alias(libs.plugins.android.application)
+}
+
+android {
+    namespace 'com.ditzzy.dsunext'
+    compileSdk 36
+    buildToolsVersion "35.0.1"
+    
+    defaultConfig {
+        applicationId 'com.ditzzy.dsunext'
+        minSdk 29
+        targetSdk 36
+        versionCode 1
+        versionName '1.0'
+
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+
+    buildFeatures {
+        viewBinding true
+        aidl true
+        buildConfig true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    compileOnly project(':hidden-api-stub')
+
+    implementation libs.androidx.core
+    implementation libs.androidx.appcompat
+    implementation libs.material
+    implementation libs.androidx.constraintlayout
+    implementation libs.androidx.activity
+    implementation libs.androidx.documentfile
+    implementation libs.androidx.lifecycle.viewmodel
+    implementation libs.androidx.lifecycle.livedata
+
+    // Root shell and root service (privileged operation mode)
+    implementation libs.libsu.core
+    implementation libs.libsu.service
+
+    // Shizuku (privileged operation mode without root)
+    implementation libs.shizuku.api
+    implementation libs.shizuku.provider
+
+    implementation libs.hiddenapibypass
+
+    // Image decompression (xz, gz) used while preparing images
+    implementation libs.xz
+    implementation libs.commons.compress
+}

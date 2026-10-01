@@ -1,0 +1,7 @@
+<resources>
+    <dimen name="screen_margin">16dp</dimen>
+    <dimen name="segmented_item_gap">2dp</dimen>
+    <dimen name="section_gap">24dp</dimen>
+    <dimen name="card_padding">20dp</dimen>
+    <dimen name="fab_clearance">112dp</dimen>
+</resources>

@@ -1,0 +1,13 @@
+DSU Next
+Copyright (c) Ditzzy
+
+This project includes code derived from DSU Sideloader
+(https://github.com/VegaBobo/DSU-Sideloader), licensed under the Apache License, Version 2.0.
+The original license can be found at http://www.apache.org/licenses/LICENSE-2.0
+
+Derived parts: privileged service and operation modes, installation preparation pipeline,
+ADB script generation, DSU installer (root), logcat based installation diagnostics.
+
+installer/root/SparseInputStream.java is derived from the Android Open Source Project
+(Copyright (C) 2019 The Android Open Source Project), licensed under the Apache License,
+Version 2.0.
