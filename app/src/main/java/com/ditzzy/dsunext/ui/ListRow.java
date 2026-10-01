@@ -22,10 +22,10 @@ public final class ListRow {
         this.binding = binding;
     }
 
-    /** Inflates a row and appends it to {@code group}, call {@link SegmentedGroup#apply} after. */
     public static ListRow create(LinearLayout group) {
         RowListItemBinding binding =
                 RowListItemBinding.inflate(LayoutInflater.from(group.getContext()), group, false);
+        binding.getRoot().setSaveFromParentEnabled(false);
         group.addView(binding.getRoot());
         return new ListRow(binding);
     }
@@ -65,6 +65,10 @@ public final class ListRow {
         binding.itemTrailingIcon.setImageResource(icon);
         binding.itemTrailingIcon.setVisibility(View.VISIBLE);
         return this;
+    }
+
+    public android.widget.ImageView trailingIconView() {
+        return binding.itemTrailingIcon;
     }
 
     public ListRow hideTrailingIcon() {

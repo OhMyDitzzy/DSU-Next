@@ -3,19 +3,24 @@ package com.ditzzy.dsunext.activity;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.transition.TransitionManager;
 import android.view.View;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.DrawableRes;
+import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.ditzzy.dsunext.DsuNextApp;
 import com.ditzzy.dsunext.R;
 import com.ditzzy.dsunext.core.AppPrefs;
+import com.ditzzy.dsunext.core.ThemeManager;
 import com.ditzzy.dsunext.databinding.ActivitySettingsBinding;
 import com.ditzzy.dsunext.model.OperationMode;
 import com.ditzzy.dsunext.model.Session;
+import com.ditzzy.dsunext.model.ThemeMode;
+import com.ditzzy.dsunext.ui.ColorSwatchRow;
 import com.ditzzy.dsunext.ui.InsetsUtils;
 import com.ditzzy.dsunext.ui.ListRow;
 import com.ditzzy.dsunext.ui.SegmentedGroup;
@@ -23,9 +28,19 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public class SettingsActivity extends AppCompatActivity {
 
+    private static final String STATE_COLORS_EXPANDED = "colors_expanded";
+
+    /** Order shown in the theme dialog. */
+    private static final ThemeMode[] THEME_CHOICES = {ThemeMode.DARK, ThemeMode.LIGHT, ThemeMode.SYSTEM};
+
     private ActivitySettingsBinding binding;
     private AppPrefs appPrefs;
     private Session session;
+    private ThemeManager themeManager;
+
+    private ListRow colorRow;
+    private ColorSwatchRow swatchRow;
+    private boolean colorsExpanded;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,10 +52,14 @@ public class SettingsActivity extends AppCompatActivity {
         DsuNextApp app = DsuNextApp.from(this);
         appPrefs = app.getAppPrefs();
         session = app.getSession();
+        themeManager = app.getThemeManager();
+        // Recreating the activity after a color change must not fold the swatches back
+        colorsExpanded = savedInstanceState != null && savedInstanceState.getBoolean(STATE_COLORS_EXPANDED);
 
         binding.toolbar.setNavigationOnClickListener(v -> finish());
         InsetsUtils.padBottomAndSides(binding.scrollView);
 
+        buildAppearanceGroup();
         buildInstallationGroup();
         buildDeveloperGroup();
         buildOtherGroup();
@@ -53,6 +72,98 @@ public class SettingsActivity extends AppCompatActivity {
         int visibility = appPrefs.getBoolean(AppPrefs.DEVELOPER_OPTIONS) ? View.VISIBLE : View.GONE;
         binding.headerDeveloper.setVisibility(visibility);
         binding.groupDeveloper.setVisibility(visibility);
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(STATE_COLORS_EXPANDED, colorsExpanded);
+    }
+
+    private void buildAppearanceGroup() {
+        ListRow themeRow = ListRow.create(binding.groupAppearance)
+                .icon(R.drawable.ic_brightness_medium)
+                .title(R.string.theme)
+                .trailingText(getString(themeManager.getThemeMode().getLabel()));
+        themeRow.onClick(v -> showThemeDialog(themeRow));
+
+        // Switch below is what disables the color swatches, so it comes first
+        boolean dynamicSupported = ThemeManager.isDynamicColorSupported();
+        ListRow dynamicRow = ListRow.create(binding.groupAppearance)
+                .icon(R.drawable.ic_auto_awesome)
+                .title(R.string.dynamic_color)
+                .supporting(dynamicSupported
+                        ? R.string.dynamic_color_description
+                        : R.string.dynamic_color_unsupported)
+                .enabled(dynamicSupported);
+        dynamicRow.toggle(themeManager.isDynamicColorEnabled(), enabled -> {
+            themeManager.setDynamicColorEnabled(enabled);
+            updateColorState();
+        });
+
+        colorRow = ListRow.create(binding.groupAppearance)
+                .icon(R.drawable.ic_palette)
+                .title(R.string.color)
+                .trailingIcon(R.drawable.ic_expand_more)
+                .onClick(v -> setColorsExpanded(!colorsExpanded, true));
+        swatchRow = ColorSwatchRow.create(binding.groupAppearance, themeManager.getColorPalette(), palette -> {
+            swatchRow.select(palette);
+            themeManager.setColorPalette(palette);
+            updateColorState();
+        });
+
+        updateColorState();
+        setColorsExpanded(colorsExpanded, false);
+    }
+
+    /** Swatches are dimmed and ignore taps while dynamic color is on. */
+    private void updateColorState() {
+        boolean dynamic = themeManager.isDynamicColorEnabled();
+        swatchRow.enabled(!dynamic);
+        colorRow.supporting(dynamic
+                ? R.string.color_disabled_dynamic
+                : themeManager.getColorPalette().getLabel());
+    }
+
+    private void setColorsExpanded(boolean expanded, boolean animate) {
+        colorsExpanded = expanded;
+        if (animate) {
+            TransitionManager.beginDelayedTransition(binding.groupAppearance);
+        }
+        swatchRow.visible(expanded);
+        // Corners of the segments depend on which rows are visible
+        SegmentedGroup.apply(binding.groupAppearance);
+
+        float rotation = expanded ? 180f : 0f;
+        if (animate) {
+            colorRow.trailingIconView().animate().rotation(rotation).setDuration(200).start();
+        } else {
+            colorRow.trailingIconView().setRotation(rotation);
+        }
+    }
+
+    private void showThemeDialog(ListRow themeRow) {
+        ThemeMode current = themeManager.getThemeMode();
+        CharSequence[] labels = new CharSequence[THEME_CHOICES.length];
+        int checked = 0;
+        for (int i = 0; i < THEME_CHOICES.length; i++) {
+            labels[i] = getString(THEME_CHOICES[i].getLabel());
+            if (THEME_CHOICES[i] == current) {
+                checked = i;
+            }
+        }
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.theme)
+                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
+                    dialog.dismiss();
+                    ThemeMode mode = THEME_CHOICES[which];
+                    if (mode != themeManager.getThemeMode()) {
+                        themeRow.trailingText(getString(mode.getLabel()));
+                        themeManager.setThemeMode(mode);
+                    }
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
     }
 
     private void buildInstallationGroup() {

@@ -6,6 +6,7 @@ import android.content.Context;
 import com.ditzzy.dsunext.handler.CrashHandler;
 import com.ditzzy.dsunext.core.AppPrefs;
 import com.ditzzy.dsunext.core.StorageManager;
+import com.ditzzy.dsunext.core.ThemeManager;
 import com.ditzzy.dsunext.model.Session;
 import com.topjohnwu.superuser.Shell;
 
@@ -14,6 +15,7 @@ import org.lsposed.hiddenapibypass.HiddenApiBypass;
 public class DsuNextApp extends Application {
     private AppPrefs appPrefs;
     private StorageManager storageManager;
+    private ThemeManager themeManager;
     private Session session;
     
     @Override
@@ -37,6 +39,9 @@ public class DsuNextApp extends Application {
                 .setTimeout(10));
 
         appPrefs = new AppPrefs(this);
+        // Every process needs it (the crash screen included), so it is not guarded like the crash handler
+        themeManager = new ThemeManager(appPrefs);
+        themeManager.install(this);
         storageManager = new StorageManager(this /*, appPrefs */);
         session = new Session();
     }
@@ -47,6 +52,10 @@ public class DsuNextApp extends Application {
 
     public AppPrefs getAppPrefs() {
         return appPrefs;
+    }
+
+    public ThemeManager getThemeManager() {
+        return themeManager;
     }
 
     public StorageManager getStorageManager() {
