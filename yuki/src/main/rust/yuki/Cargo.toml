@@ -1,0 +1,15 @@
+[package]
+name = "yuki"
+description = "JNI bridge that exposes yuki-core to the :yuki Android module (libyuki.so)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[lib]
+name = "yuki"
+crate-type = ["cdylib"]
+
+[dependencies]
+yuki-core.workspace = true
+jni.workspace = true

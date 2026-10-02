@@ -1,0 +1,29 @@
+[workspace]
+resolver = "2"
+members = ["yuki-core", "yuki"]
+
+[workspace.package]
+version = "3.0.1"
+edition = "2021"
+rust-version = "1.88"
+repository = "https://github.com/OhMyDitzzy/DSU-Next"
+
+[workspace.dependencies]
+brotli = "9"
+flate2 = { version = "1", default-features = false, features = ["zlib-rs"] }
+bzip2 = "0.6"
+lzma-rust2 = { version = "0.21", default-features = false, features = ["std", "xz", "encoder", "optimization"] }
+rsa = "0.9"
+ruzstd = "0.9"
+sha1 = "0.11"
+sha2 = "0.11"
+zip = { version = "8.6", default-features = false, features = ["deflate-flate2-zlib-rs"] }
+sdat2img = { git = "https://github.com/wahyu6070/sdat2img-rust", tag = "v1.0.0" }
+img2sdat = { git = "https://github.com/wahyu6070/img2sdat-rust", tag = "v1.0.0" }
+yuki-core = { path = "yuki-core" }
+jni = "0.21"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
