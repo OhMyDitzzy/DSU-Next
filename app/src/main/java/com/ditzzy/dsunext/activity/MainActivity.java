@@ -135,6 +135,7 @@ public class MainActivity extends AppCompatActivity implements Shizuku.OnRequest
         registerLaunchers();
         setupToolbar();
         buildInstallationRows();
+        buildToolsRows();
         setupStaticClicks();
         applyInsets();
 
@@ -229,6 +230,19 @@ public class MainActivity extends AppCompatActivity implements Shizuku.OnRequest
         SegmentedGroup.apply(group);
     }
 
+    private void buildToolsRows() {
+        LinearLayout group = binding.toolsGroup;
+
+        ListRow.create(group)
+                .icon(R.drawable.ic_phone)
+                .title(R.string.treble_check)
+                .supporting(R.string.treble_check_description)
+                .trailingIcon(R.drawable.ic_chevron_right)
+                .onClick(v -> startActivity(new Intent(this, TrebleActivity.class)));
+
+        SegmentedGroup.apply(group);
+    }
+
     private void setupStaticClicks() {
         binding.fabInstall.setOnClickListener(v -> viewModel.onClickInstall());
         binding.infoDocs.setOnClickListener(v -> openUrl(DSU_DOCS));
@@ -289,6 +303,7 @@ public class MainActivity extends AppCompatActivity implements Shizuku.OnRequest
        boolean installing = currentInstallation.isInstalling();
        boolean showSelection = checksPassed && !installing;
        binding.installationSection.setVisibility(showSelection ? View.VISIBLE : View.GONE);
+       binding.toolsSection.setVisibility(installing ? View.GONE : View.VISIBLE);
        binding.progressCard.setVisibility(installing ? View.VISIBLE : View.GONE);
 
        if (showSelection && currentInstallation.installable) {

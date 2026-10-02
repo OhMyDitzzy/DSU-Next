@@ -228,6 +228,36 @@
     <string name="saved_logs">Logs saved!</string>
     <string name="save_logs_failed">Unable to save logs.</string>
 
+    <!-- Tools -->
+    <string name="tools">Tools</string>
+    <string name="treble_check">Treble check</string>
+    <string name="treble_check_description">Find out if your device supports Project Treble</string>
+
+    <!-- Treble screen -->
+    <string name="treble_checking">Checking your device…</string>
+    <string name="treble_supported">Treble supported</string>
+    <string name="treble_not_supported">Treble not supported</string>
+    <string name="treble_supported_summary">Your device ships with Project Treble, which separates the vendor implementation from the Android framework.</string>
+    <string name="treble_not_supported_summary">Project Treble was not detected on this device, so Generic System Images (GSI) are not expected to work.</string>
+    <string name="treble_details">Details</string>
+    <string name="treble_type">Treble type</string>
+    <string name="treble_type_standard">Standard</string>
+    <string name="treble_type_legacy">Legacy (vendor manifest in /vendor)</string>
+    <string name="treble_vndk_version">VNDK version</string>
+    <string name="treble_vndk_lite">VNDK Lite</string>
+    <string name="treble_cpu_architecture">CPU architecture</string>
+    <string name="treble_arch_arm32">ARM 32-bit</string>
+    <string name="treble_arch_arm32_binder64">ARM 32-bit with 64-bit binder</string>
+    <string name="treble_arch_arm64">ARM 64-bit</string>
+    <string name="treble_arch_x86">x86 32-bit</string>
+    <string name="treble_arch_x86_64">x86 64-bit</string>
+    <string name="treble_partition_scheme">Partition scheme</string>
+    <string name="treble_partition_virtual_ab">Virtual A/B</string>
+    <string name="treble_partition_ab">A/B</string>
+    <string name="treble_partition_a_only">A-only</string>
+    <string name="treble_system_as_root">System-as-root</string>
+    <string name="treble_unknown">Unknown</string>
+
     <!-- Generic and multipurpose strings -->
     <string name="no">No</string>
     <string name="yes">Yes</string>
