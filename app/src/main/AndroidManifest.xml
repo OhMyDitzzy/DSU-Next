@@ -43,6 +43,9 @@
             android:name=".activity.TrebleActivity"
             android:exported="false" />
         <activity
+            android:name=".activity.EditGsiActivity"
+            android:exported="false" />
+        <activity
             android:name=".activity.CrashActivity"
             android:exported="false"
             android:process=":crash" />

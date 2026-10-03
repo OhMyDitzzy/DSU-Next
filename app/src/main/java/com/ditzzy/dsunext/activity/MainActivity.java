@@ -240,6 +240,13 @@ public class MainActivity extends AppCompatActivity implements Shizuku.OnRequest
                 .trailingIcon(R.drawable.ic_chevron_right)
                 .onClick(v -> startActivity(new Intent(this, TrebleActivity.class)));
 
+        ListRow.create(group)
+                .icon(R.drawable.ic_edit)
+                .title(R.string.edit_gsi)
+                .supporting(R.string.edit_gsi_description)
+                .trailingIcon(R.drawable.ic_chevron_right)
+                .onClick(v -> startActivity(new Intent(this, EditGsiActivity.class)));
+
         SegmentedGroup.apply(group);
     }
 
