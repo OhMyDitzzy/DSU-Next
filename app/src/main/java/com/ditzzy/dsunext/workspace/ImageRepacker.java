@@ -1,6 +1,7 @@
 package com.ditzzy.dsunext.workspace;
 
 import com.ditzzy.dsunext.yuki.BuildResult;
+import com.ditzzy.dsunext.yuki.HashtreeFooterResult;
 import com.ditzzy.dsunext.yuki.Yuki;
 
 import org.json.JSONArray;
@@ -12,6 +13,9 @@ import java.io.IOException;
 import java.util.Properties;
 
 public final class ImageRepacker {
+
+    /** Hash of the AVB hashtree footer, the same as avbtool's {@code --hash_algorithm sha256}. */
+    private static final String AVB_HASH_ALGORITHM = "sha256";
 
     private ImageRepacker() {
     }
@@ -60,6 +64,21 @@ public final class ImageRepacker {
             }
             throw e;
         }
+
+        // A rebuilt image has no AVB footer and does not boot without one, so the job
+        // is not done yet: add the hashtree footer first (avbtool add_hashtree_footer
+        // --partition_name <partition> --hash_algorithm sha256 --do_not_generate_fec).
+        HashtreeFooterResult footer;
+        try {
+            reporter.log("- Adding the AVB hashtree footer");
+            footer = Yuki.addHashtreeFooter(output, partition, AVB_HASH_ALGORITHM, reporter::log);
+        } catch (IOException | RuntimeException e) {
+            // an image without its footer is of no use, do not leave it behind
+            //noinspection ResultOfMethodCallIgnored
+            output.delete();
+            throw e;
+        }
+        reporter.log("- AVB footer added, root digest " + footer.getRootDigest());
 
         for (String warning : result.getWarnings()) {
             reporter.log("! " + warning);

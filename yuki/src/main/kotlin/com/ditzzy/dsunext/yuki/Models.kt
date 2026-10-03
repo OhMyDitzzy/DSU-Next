@@ -94,6 +94,22 @@ data class BuildResult(
     val warnings: List<String>,
 )
 
+/** What [Yuki.addHashtreeFooter] appended to an image. Sizes are in bytes. */
+data class HashtreeFooterResult(
+    /** Size of the image before the footer (`original_image_size`). */
+    val originalSize: Long,
+    /** Part of the image the hash tree covers (original size rounded up to 4096). */
+    val hashedSize: Long,
+    val treeOffset: Long,
+    val treeSize: Long,
+    val vbmetaOffset: Long,
+    val vbmetaSize: Long,
+    /** Size of the image file now. */
+    val finalSize: Long,
+    val rootDigest: String,
+    val salt: String,
+)
+
 data class DynamicGroup(
     val name: String,
     /** 0 means no limit. */

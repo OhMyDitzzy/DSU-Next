@@ -133,6 +133,29 @@ object Yuki {
         )
     }
 
+    /**
+     * Appends an AVB hashtree footer to the raw ext4 or EROFS [image], in place.
+     * The same as `avbtool add_hashtree_footer --image <image> --partition_name
+     * <partition> --hash_algorithm <algorithm> --do_not_generate_fec`: no FEC and
+     * no signing key (the vbmeta is unsigned), so the image only boots on an
+     * unlocked device. [algorithm] is sha1, sha256 or sha512. The image grows by
+     * the hash tree plus two blocks. An image that has a footer already gets a
+     * fresh one. Throws, with the image at its old size, when it fails.
+     */
+    @JvmStatic
+    @JvmOverloads
+    @Throws(YukiException::class)
+    fun addHashtreeFooter(
+        image: File,
+        partition: String,
+        algorithm: String = "sha256",
+        logger: YukiLogger? = null,
+    ): HashtreeFooterResult = withNative {
+        parseHashtreeFooter(
+            NativeBridge.addHashtreeFooter(image.absolutePath, partition, algorithm, logger),
+        )
+    }
+
     /** Reads the manifest of a `payload.bin` or of an OTA zip that contains one. */
     @JvmStatic
     @Throws(YukiException::class)
@@ -325,6 +348,21 @@ private fun parseBuild(raw: Array<String>): BuildResult {
     val blockSize = c.nextLong()
     val newEntries = List(c.nextInt()) { c.next() }
     return BuildResult(mountPoint, directories, files, symlinks, removed, blockSize, newEntries, c.rest())
+}
+
+private fun parseHashtreeFooter(raw: Array<String>): HashtreeFooterResult {
+    val c = Cursor(raw)
+    return HashtreeFooterResult(
+        originalSize = c.nextLong(),
+        hashedSize = c.nextLong(),
+        treeOffset = c.nextLong(),
+        treeSize = c.nextLong(),
+        vbmetaOffset = c.nextLong(),
+        vbmetaSize = c.nextLong(),
+        finalSize = c.nextLong(),
+        rootDigest = c.next(),
+        salt = c.next(),
+    )
 }
 
 private fun parsePayloadInfo(raw: Array<String>): PayloadInfo {

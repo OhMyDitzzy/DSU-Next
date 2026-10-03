@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use std::ptr;
 
 use yuki_core::fs::Segments;
-use yuki_core::{br, build, dat, extract, lp, payload, rom, sdat};
+use yuki_core::{avb, br, build, dat, extract, lp, payload, rom, sdat};
 use jni::objects::{JClass, JObject, JString};
 use jni::sys::{jboolean, jint, jlong, jobjectArray, jstring};
 use jni::{JNIEnv, NativeMethod};
@@ -52,6 +52,11 @@ pub fn register(env: &mut JNIEnv) -> jni::errors::Result<()> {
             "buildImage",
             format!("({S}{S}{S}{S}Z{L}){A}"),
             build_image as *mut c_void,
+        ),
+        (
+            "addHashtreeFooter",
+            format!("({S}{S}{S}{L}){A}"),
+            add_hashtree_footer as *mut c_void,
         ),
         (
             "payloadInfo",
@@ -315,6 +320,44 @@ extern "system" fn extract_image<'l>(
             sum.bytes.to_string(),
         ];
         out.extend(sum.warnings);
+        string_array(env, &out)
+    })
+}
+
+/// [original size, hashed size, tree offset, tree size, vbmeta offset,
+/// vbmeta size, final size, root digest (hex), salt (hex)]
+extern "system" fn add_hashtree_footer<'l>(
+    mut env: JNIEnv<'l>,
+    _class: JClass<'l>,
+    image: JString<'l>,
+    part: JString<'l>,
+    algorithm: JObject<'l>,
+    log: JObject<'l>,
+) -> jobjectArray {
+    guard(&mut env, ptr::null_mut(), |env| {
+        let image = string(env, &image)?;
+        let part = string(env, &part)?;
+        let mut opts = avb::HashtreeOptions::new(part);
+        if let Some(name) = opt_string(env, algorithm)? {
+            opts.hash_algorithm = name.parse::<avb::HashAlgorithm>()?;
+        }
+        let footer = {
+            let mut log = logger(env, &log);
+            avb::add_hashtree_footer(Path::new(&image), &opts, &mut log).map_err(msg)?
+        };
+        pending(env)?;
+        let hex = |b: &[u8]| b.iter().map(|x| format!("{x:02x}")).collect::<String>();
+        let out = vec![
+            footer.original_size.to_string(),
+            footer.image_size.to_string(),
+            footer.tree_offset.to_string(),
+            footer.tree_size.to_string(),
+            footer.vbmeta_offset.to_string(),
+            footer.vbmeta_size.to_string(),
+            footer.final_size.to_string(),
+            hex(&footer.root_digest),
+            hex(&footer.salt),
+        ];
         string_array(env, &out)
     })
 }

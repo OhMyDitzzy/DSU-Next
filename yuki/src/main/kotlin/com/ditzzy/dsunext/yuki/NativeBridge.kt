@@ -49,6 +49,13 @@ internal object NativeBridge {
         logger: YukiLogger?,
     ): Array<String>
 
+    @JvmStatic external fun addHashtreeFooter(
+        image: String,
+        part: String,
+        algorithm: String?,
+        logger: YukiLogger?,
+    ): Array<String>
+
     @JvmStatic external fun payloadInfo(path: String): Array<String>
 
     @JvmStatic external fun payloadDump(

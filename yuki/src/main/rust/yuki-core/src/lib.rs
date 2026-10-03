@@ -1,5 +1,6 @@
 //! Core library of Jancox tool: unpack/repack Android ROMs.
 
+pub mod avb;
 pub mod br;
 pub mod build;
 pub mod dat;
