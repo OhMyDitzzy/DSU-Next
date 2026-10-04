@@ -1,10 +1,11 @@
 package com.ditzzy.dsunext.service;
 
 import android.app.IActivityManager;
+import android.content.ComponentName;
 import android.content.Intent;
-import android.content.pm.IPackageManager;
 import android.gsi.GsiProgress;
 import android.gsi.IGsiService;
+import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
@@ -19,9 +20,14 @@ import com.ditzzy.dsunext.IPrivilegedService;
 
 import org.lsposed.hiddenapibypass.HiddenApiBypass;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Runs with elevated privileges (root, shell through Shizuku, or system) and exposes the
@@ -38,8 +44,27 @@ public final class PrivilegedService extends IPrivilegedService.Stub {
 
     private static final String TAG = "PrivilegedService";
 
+    private static final int PER_USER_RANGE = 100_000;
+    private static final long SHELL_TIMEOUT_SECONDS = 15L;
+
+    // Arguments: $1 user id, $2 package, $3 permission, $4 component to restart (may be empty).
+    //
+    // The restart is chained to a successful grant inside the script itself, and its output is
+    // detached from ours, for two reasons: granting READ_LOGS makes the system kill the app, and
+    // Shizuku tears a non-daemon service down once its client is gone. A restart driven from
+    // Java could be cut short by either, while the shell child simply carries on.
+    private static final String GRANT_SCRIPT =
+            "out=$(/system/bin/cmd package grant --user \"$1\" \"$2\" \"$3\" 2>&1); rc=$?\n"
+                    + "[ -n \"$out\" ] && echo \"$out\"\n"
+                    + "if [ $rc -eq 0 ] && [ -n \"$4\" ]; then\n"
+                    + "  ( /system/bin/sleep 1;"
+                    + " /system/bin/cmd activity force-stop \"$2\";"
+                    + " /system/bin/cmd activity start --user \"$1\" -n \"$4\" )"
+                    + " >/dev/null 2>&1 </dev/null &\n"
+                    + "fi\n"
+                    + "exit $rc";
+
     private IActivityManager activityManager;
-    private IPackageManager packageManager;
     private IStorageManager storageManager;
     private IDynamicSystemService dynamicSystem;
 
@@ -116,19 +141,73 @@ public final class PrivilegedService extends IPrivilegedService.Stub {
     }
 
     //
-    // Package Manager
+    // Permissions
     //
 
-    private synchronized IPackageManager packageManager() {
-        if (packageManager == null) {
-            packageManager = IPackageManager.Stub.asInterface(getBinder("package"));
+    /**
+     * Grants {@code permission} to this app by running {@code pm grant} as the service's own user
+     * (shell through Shizuku, or root).
+     *
+     * <p>Shizuku used to offer {@code Shizuku.newProcess()} for this, but it is not part of the
+     * public API anymore. Running the command from the user service is the supported way, and it
+     * is stable across Android releases, unlike the hidden binder call this used before
+     * ({@code IPackageManager.grantRuntimePermission()}), whose signature and home vary by release.
+     */
+    @Override
+    public boolean grantPermission(String permission, ComponentName restart) {
+        // The caller is the app itself, so its uid tells which user it is installed for
+        int userId = Binder.getCallingUid() / PER_USER_RANGE;
+        String component = restart != null ? restart.flattenToShortString() : "";
+
+        try {
+            ShellResult result = runShell(
+                    "/system/bin/sh", "-c", GRANT_SCRIPT, "dsunext",
+                    String.valueOf(userId), BuildConfig.APPLICATION_ID, permission, component);
+            if (result.exitCode == 0) {
+                Log.i(TAG, "Granted " + permission + " (user " + userId + ")");
+                return true;
+            }
+            Log.e(TAG, "Unable to grant " + permission + ", exit code " + result.exitCode
+                    + ": " + result.output);
+        } catch (IOException e) {
+            Log.e(TAG, "Unable to run the grant command.", e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            Log.e(TAG, "Interrupted while granting " + permission, e);
         }
-        return packageManager;
+        return false;
     }
 
-    @Override
-    public void grantPermission(String permissionName) {
-        packageManager().grantRuntimePermission(BuildConfig.APPLICATION_ID, permissionName, 0);
+    private static final class ShellResult {
+        final int exitCode;
+        final String output;
+
+        ShellResult(int exitCode, String output) {
+            this.exitCode = exitCode;
+            this.output = output;
+        }
+    }
+
+    private static ShellResult runShell(String... command) throws IOException, InterruptedException {
+        Process process = new ProcessBuilder(command).redirectErrorStream(true).start();
+        process.getOutputStream().close();
+
+        // The output is tiny, so it's safe to wait first and read afterwards
+        if (!process.waitFor(SHELL_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+            process.destroyForcibly();
+            return new ShellResult(-1, "Timed out after " + SHELL_TIMEOUT_SECONDS + "s");
+        }
+        return new ShellResult(process.exitValue(), readAll(process.getInputStream()).trim());
+    }
+
+    private static String readAll(InputStream in) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        int read;
+        while ((read = in.read(buffer)) != -1) {
+            out.write(buffer, 0, read);
+        }
+        return new String(out.toByteArray(), StandardCharsets.UTF_8);
     }
 
     //

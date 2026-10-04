@@ -66,7 +66,8 @@
 
     <string name="missing_permission">Missing permission</string>
     <string name="missing_permission_description">DSU Next requires READ_LOGS permission (which allows logcat reading).\nThis permission is used to obtain installation progress and diagnose errors in DSU installation.\n\n** Granting this permission may require an application restart.</string>
-    <string name="granting_permission">Waiting service to grant permission, please wait…</string>
+    <string name="granting_permission">Granting permission, DSU Next will restart in a moment…</string>
+    <string name="grant_permission_failed">Couldn\'t grant READ_LOGS automatically. Try again, or run over adb:\npm grant %1$s android.permission.READ_LOGS</string>
 
     <!-- Installation card -->
     <string name="select_gsi_info">Select a file to be installed</string>

@@ -1,6 +1,7 @@
 package com.ditzzy.dsunext.viewmodel;
 
 import android.app.Application;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
@@ -56,6 +57,7 @@ public final class HomeViewModel extends AndroidViewModel {
     private static final long USERDATA_ERROR_MS = 5000L;
     private static final long FILE_ERROR_MS = 2000L;
     private static final long SELINUX_SETTLE_MS = 5000L;
+    private static final long GRANT_RECHECK_MS = 4000L;
 
     private static final List<String> SUPPORTED_EXTENSIONS = Arrays.asList("gz", "xz", "img", "gzip");
 
@@ -295,17 +297,24 @@ public final class HomeViewModel extends AndroidViewModel {
 
     public void grantReadLogs() {
         additionalCard.postValue(AdditionalCard.GRANTING_READ_LOGS_PERMISSION);
-        Intent intent = new Intent();
-        intent.setClassName(BuildConfig.APPLICATION_ID, MainActivity.class.getName());
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        ComponentName restart = new ComponentName(BuildConfig.APPLICATION_ID, MainActivity.class.getName());
         PrivilegedProvider.run(service -> {
-            service.grantPermission(READ_LOGS);
-            if (Build.VERSION.SDK_INT <= 30) {
-                // Older releases only apply the grant after the process restarts
-                service.forceStopPackage(BuildConfig.APPLICATION_ID);
+            // The service restarts the app once the grant went through, and the system usually
+            // kills it as well since READ_LOGS changes its groups. Either way this process
+            // normally ends here.
+            if (!service.grantPermission(READ_LOGS, restart)) {
+                onReadLogsGrantFailed();
+                return;
             }
-            service.startActivity(intent);
-        });
+            // Only reached when the app is still alive. If the restart did not happen, don't
+            // leave the progress card up forever: the permission is granted, so the checks pass.
+            mainHandler.postDelayed(this::initialChecks, GRANT_RECHECK_MS);
+        }, this::onReadLogsGrantFailed);
+    }
+
+    private void onReadLogsGrantFailed() {
+        postMessage(R.string.grant_permission_failed, BuildConfig.APPLICATION_ID);
+        additionalCard.postValue(AdditionalCard.MISSING_READ_LOGS_PERMISSION);
     }
 
     public void takeUriPermission(Uri uri) {

@@ -1,5 +1,6 @@
 package com.ditzzy.dsunext;
 
+import android.content.ComponentName;
 import android.content.Intent;
 import android.gsi.GsiProgress;
 import android.os.ParcelFileDescriptor;
@@ -14,7 +15,9 @@ interface IPrivilegedService {
     void startActivity(in Intent intent) = 1001;
     void forceStopPackage(String packageName) = 1003;
 
-    void grantPermission(String permission) = 2001;
+    // Grants one of our own permissions. When restart is not null the app is restarted afterwards
+    // (the new group of READ_LOGS only reaches a fresh process). Returns false if the grant failed.
+    boolean grantPermission(String permission, in ComponentName restart) = 2001;
 
     List<VolumeInfo> getVolumes() = 3001;
     void unmount(String volId) = 3002;

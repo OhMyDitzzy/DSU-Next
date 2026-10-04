@@ -301,7 +301,7 @@ public class MainActivity extends AppCompatActivity implements Shizuku.OnRequest
             }
             UiMessage message = event.getContentIfNotHandled();
             if (message != null) {
-                Toast.makeText(this, message.resolve(this), Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, message.resolve(this), Toast.LENGTH_LONG).show();
             }
         });
     }

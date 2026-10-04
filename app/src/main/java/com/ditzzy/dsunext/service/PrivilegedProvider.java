@@ -44,7 +44,8 @@ public final class PrivilegedProvider {
     /**
      * Runs {@code action} in a background thread as soon as the service is available.
      *
-     * @param onFail called when the service did not show up in time.
+     * @param onFail called when the service did not show up in time, or when the action threw.
+     *               Without it a failure would only be logged, leaving the UI waiting forever.
      */
     public static void run(ServiceAction action, @Nullable Runnable onFail) {
         EXECUTOR.execute(() -> {
@@ -60,6 +61,9 @@ public final class PrivilegedProvider {
                 action.run(service);
             } catch (Exception e) {
                 Log.e(TAG, "Privileged action failed.", e);
+                if (onFail != null) {
+                    onFail.run();
+                }
             }
         });
     }

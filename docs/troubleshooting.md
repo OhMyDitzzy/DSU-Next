@@ -27,7 +27,11 @@ If the app says the device does not support dynamic partitions, DSU cannot work 
 
 ### The app asks for READ_LOGS
 
-Progress tracking and diagnostics need it. Grant it from a mode that can (root, system or Shizuku), and restart the app if it asks.
+Progress tracking and diagnostics need it. With Shizuku or root, tap **Grant**: the app runs `pm grant` through its privileged service and restarts itself. If the automatic grant fails, a message says so and the card stays, so you can try again or grant it yourself over `adb`:
+
+```
+adb shell pm grant com.ditzzy.dsunext android.permission.READ_LOGS
+```
 
 ### Other things to check
 
