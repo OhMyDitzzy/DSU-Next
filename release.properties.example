@@ -1,0 +1,8 @@
+# Signing key for release builds.
+#   keytool -genkeypair -v -keystore release.keystore -alias dsunext \
+#           -keyalg RSA -keysize 4096 -validity 36500
+# Relative to the project root, or an absolute path.
+storeFile=release.keystore
+storePassword=change-me
+keyAlias=dsunext
+keyPassword=change-me

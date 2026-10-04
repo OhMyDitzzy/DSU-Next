@@ -6,6 +6,31 @@ plugins {
     alias(libs.plugins.android.application)
 }
 
+// Optional build switches, passed by build.py and the CI workflow.
+// Without them the build behaves exactly as before.
+//
+//   -Pdsu.abis=arm64-v8a,armeabi-v7a   ABIs to package (libyuki.so must exist for each)
+//   -Pdsu.split=true                   one APK per ABI instead of a single APK
+//   -Pdsu.universal=true               together with split: also build one APK with every ABI
+def dsuAbis = (findProperty('dsu.abis') ?: '').toString().split(',').collect { it.trim() }.findAll { it }
+def dsuSplit = (findProperty('dsu.split') ?: 'false').toString().toBoolean()
+def dsuUniversal = (findProperty('dsu.universal') ?: 'false').toString().toBoolean()
+
+// Release signing. The key comes from the environment (CI) or from
+// release.properties (local, see release.properties.example). Without a key the
+// release build is signed with the debug key so that the APK can still be installed.
+
+def releaseProps = new Properties()
+def releasePropsFile = rootProject.file('release.properties')
+if (releasePropsFile.isFile()) {
+    releasePropsFile.withInputStream { releaseProps.load(it) }
+}
+def signingValue = { String envName, String propName ->
+    System.getenv(envName) ?: releaseProps.getProperty(propName)
+}
+def releaseStorePath = signingValue('DSU_KEYSTORE_FILE', 'storeFile')
+def hasReleaseKey = releaseStorePath && rootProject.file(releaseStorePath).isFile()
+
 android {
     namespace 'com.ditzzy.dsunext'
     compileSdk 36
@@ -19,6 +44,42 @@ android {
         versionName "1.0.${getBuildTimestamp()}"
 
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+
+        // Single APK: package only the selected ABIs. (Split builds use `splits` below;
+        // the two cannot be combined.)
+        if (dsuAbis && !dsuSplit) {
+            ndk {
+                abiFilters.addAll(dsuAbis)
+            }
+        }
+    }
+
+    signingConfigs {
+        release {
+            if (hasReleaseKey) {
+                storeFile rootProject.file(releaseStorePath)
+                storePassword signingValue('DSU_KEYSTORE_PASSWORD', 'storePassword')
+                keyAlias signingValue('DSU_KEY_ALIAS', 'keyAlias')
+                keyPassword signingValue('DSU_KEY_PASSWORD', 'keyPassword')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig hasReleaseKey ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    if (dsuAbis && dsuSplit) {
+        splits {
+            abi {
+                enable true
+                reset()
+                include(*dsuAbis)
+                universalApk dsuUniversal
+            }
+        }
     }
 
     buildFeatures {

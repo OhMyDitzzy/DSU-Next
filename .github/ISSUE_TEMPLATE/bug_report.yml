@@ -1,0 +1,125 @@
+name: Bug report
+description: Something in DSU Next does not work as it should
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this.
+
+        Please check the [troubleshooting guide](https://github.com/OhMyDitzzy/DSU-Next/blob/HEAD/docs/troubleshooting.md) first, it covers the common installation and Edit GSI errors, and search the existing issues to avoid a duplicate.
+
+        If the app crashed, the crash screen has a **Copy log** button. For installation problems use **View logs** or **Save logs** on the error.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you submit
+      options:
+        - label: I searched the existing issues and this is not a duplicate.
+          required: true
+        - label: I read the troubleshooting guide and it does not solve this.
+          required: true
+        - label: I am using the latest version of DSU Next.
+          required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where does it happen?
+      options:
+        - Installing a GSI as a DSU
+        - Edit GSI (import, unpack, repack, workspace)
+        - Treble check
+        - Settings, theme or colors
+        - App start, crash or something else
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: DSU Next version
+      description: Shown on the About screen, or in the APK file name.
+      placeholder: "1.0.20261004120000"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: operation_mode
+    attributes:
+      label: Operation mode
+      description: Shown in Settings, under Operation mode.
+      options:
+        - Root/System
+        - System
+        - Root
+        - Shizuku
+        - ADB
+        - I do not know
+    validations:
+      required: true
+
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      description: Brand and model.
+      placeholder: "Xiaomi Redmi Note 11 (spesn)"
+    validations:
+      required: true
+
+  - type: input
+    id: android
+    attributes:
+      label: Android version and ROM
+      description: The system the app runs on, including the custom ROM and its version if you use one.
+      placeholder: "Android 14, LineageOS 21"
+    validations:
+      required: true
+
+  - type: input
+    id: gsi
+    attributes:
+      label: GSI or image used
+      description: Name, version, source and file format. Leave empty if the bug has nothing to do with an image.
+      placeholder: "PixelExperience 14, arm64 A/B, system.img.xz"
+    validations:
+      required: false
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Tap ...
+        3. See ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Paste the log from the crash screen or from View logs. It is formatted for you, no need for backticks.
+      render: text
+    validations:
+      required: false
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Screenshots, a screen recording, or what you already tried.
+    validations:
+      required: false

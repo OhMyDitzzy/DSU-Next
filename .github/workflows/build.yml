@@ -1,0 +1,264 @@
+name: Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: Build type
+        type: choice
+        options: [release, debug]
+        default: release
+      abi_arm64_v8a:
+        description: "libyuki ABI: arm64-v8a (64-bit ARM, most phones)"
+        type: boolean
+        default: true
+      abi_armeabi_v7a:
+        description: "libyuki ABI: armeabi-v7a (32-bit ARM)"
+        type: boolean
+        default: true
+      abi_x86_64:
+        description: "libyuki ABI: x86_64"
+        type: boolean
+        default: false
+      abi_x86:
+        description: "libyuki ABI: x86"
+        type: boolean
+        default: false
+      apk_type:
+        description: "universal = one APK with every selected ABI, split = one APK per ABI, both = the two"
+        type: choice
+        options: [universal, split, both]
+        default: universal
+      publish_release:
+        description: "Publish the APKs as a GitHub Release (release builds only, needs the signing secrets)"
+        type: boolean
+        default: false
+      release_tag:
+        description: "Tag for the GitHub Release, for example v1.0.0 (only used when publishing)"
+        type: string
+        required: false
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "LICENSE"
+      - "NOTICE"
+      - ".github/ISSUE_TEMPLATE/**"
+  pull_request:
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "LICENSE"
+      - "NOTICE"
+      - ".github/ISSUE_TEMPLATE/**"
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  NDK_VERSION: 27.2.12479018 # r27c
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    outputs:
+      artifact: ${{ steps.cfg.outputs.artifact }}
+      publish: ${{ steps.cfg.outputs.publish }}
+      tag: ${{ steps.cfg.outputs.tag }}
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Resolve build configuration
+        id: cfg
+        env:
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          REF_NAME: ${{ github.ref_name }}
+          IN_BUILD_TYPE: ${{ inputs.build_type }}
+          IN_ARM64: ${{ inputs.abi_arm64_v8a }}
+          IN_ARMV7: ${{ inputs.abi_armeabi_v7a }}
+          IN_X86_64: ${{ inputs.abi_x86_64 }}
+          IN_X86: ${{ inputs.abi_x86 }}
+          IN_APK_TYPE: ${{ inputs.apk_type }}
+          IN_PUBLISH: ${{ inputs.publish_release }}
+          IN_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+
+          # Defaults for pushes and pull requests: a quick debug build.
+          build_type=debug
+          abis="arm64-v8a,armeabi-v7a"
+          apk_type=universal
+          publish=false
+          tag=""
+
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            build_type="$IN_BUILD_TYPE"
+            apk_type="$IN_APK_TYPE"
+            publish="$IN_PUBLISH"
+            tag="$IN_TAG"
+            abis=""
+            if [ "$IN_ARM64"  = "true" ]; then abis="$abis,arm64-v8a";   fi
+            if [ "$IN_ARMV7"  = "true" ]; then abis="$abis,armeabi-v7a"; fi
+            if [ "$IN_X86_64" = "true" ]; then abis="$abis,x86_64";      fi
+            if [ "$IN_X86"    = "true" ]; then abis="$abis,x86";         fi
+            abis="${abis#,}"
+          elif [[ "$REF" == refs/tags/v* ]]; then
+            build_type=release
+            abis="arm64-v8a,armeabi-v7a,x86_64,x86"
+            apk_type=both
+            publish=true
+            tag="$REF_NAME"
+          fi
+
+          if [ -z "$abis" ]; then
+            echo "::error::Select at least one libyuki ABI."
+            exit 1
+          fi
+          if [ "$publish" = "true" ]; then
+            if [ "$build_type" != "release" ]; then
+              echo "::error::Only release builds can be published."
+              exit 1
+            fi
+            if [ -z "$tag" ]; then
+              echo "::error::Set release_tag (for example v1.0.0) to publish a release."
+              exit 1
+            fi
+          fi
+
+          {
+            echo "build_type=$build_type"
+            echo "abis=$abis"
+            echo "apk_type=$apk_type"
+            echo "publish=$publish"
+            echo "tag=$tag"
+            echo "artifact=DSU-Next-$build_type-${abis//,/_}"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### Build configuration"
+            echo
+            echo "| Option | Value |"
+            echo "| --- | --- |"
+            echo "| Build type | \`$build_type\` |"
+            echo "| libyuki ABIs | \`$abis\` |"
+            echo "| APK type | \`$apk_type\` |"
+            echo "| Publish release | \`$publish\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Prepare signing key
+        id: signing
+        if: steps.cfg.outputs.build_type == 'release'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          PUBLISH: ${{ steps.cfg.outputs.publish }}
+        run: |
+          set -euo pipefail
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+            echo "keystore=$RUNNER_TEMP/release.keystore" >> "$GITHUB_OUTPUT"
+          elif [ "$PUBLISH" = "true" ]; then
+            echo "::error::Publishing needs the signing secrets: KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS and KEY_PASSWORD."
+            exit 1
+          else
+            echo "::warning::No KEYSTORE_BASE64 secret: the release APK is signed with a throwaway debug key, so it cannot update an app installed from another build."
+          fi
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install SDK platform, build tools and NDK
+        run: |
+          sdkmanager --install "platforms;android-36" "build-tools;35.0.1" "ndk;${NDK_VERSION}" > /dev/null
+          echo "ANDROID_NDK_HOME=${ANDROID_HOME}/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_ROOT=${ANDROID_HOME}/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: yuki/src/main/rust -> target
+          key: ${{ steps.cfg.outputs.abis }}
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build
+        env:
+          BUILD_TYPE: ${{ steps.cfg.outputs.build_type }}
+          ABIS: ${{ steps.cfg.outputs.abis }}
+          APK_TYPE: ${{ steps.cfg.outputs.apk_type }}
+          DSU_KEYSTORE_FILE: ${{ steps.signing.outputs.keystore }}
+          DSU_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          DSU_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          DSU_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          python3 build.py --type "$BUILD_TYPE" --abi "$ABIS" --apk-type "$APK_TYPE" --out dist
+
+      - name: List the APKs
+        run: |
+          {
+            echo "### APKs"
+            echo
+            echo "| File | Size |"
+            echo "| --- | --- |"
+            for apk in dist/*.apk; do
+              echo "| \`$(basename "$apk")\` | $(du -h "$apk" | cut -f1) |"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.cfg.outputs.artifact }}
+          path: |
+            dist/*.apk
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    name: Publish release
+    needs: build
+    if: needs.build.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download APKs
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build.outputs.artifact }}
+          path: dist
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.build.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          files: |
+            dist/*.apk
+            dist/SHA256SUMS.txt
+          generate_release_notes: true
+          fail_on_unmatched_files: true

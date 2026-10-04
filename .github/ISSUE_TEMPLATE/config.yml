@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Troubleshooting guide
+    url: https://github.com/OhMyDitzzy/DSU-Next/blob/HEAD/docs/troubleshooting.md
+    about: Installation errors, Edit GSI problems and how to write a good bug report.
+  - name: Edit GSI guide
+    url: https://github.com/OhMyDitzzy/DSU-Next/blob/HEAD/docs/edit-gsi.md
+    about: How unpacking, editing and repacking an image works, including the AVB footer.

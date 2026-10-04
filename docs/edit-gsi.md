@@ -56,7 +56,7 @@ Edit the files under the `system/` folder of the workspace. Deleted files are le
 Open the workspace menu and choose **Repack**.
 
 - **Image size** (ext4 only):
-  - *Original size* keeps the size of the imported image. Repacking fails if the files no longer fit.
+  - *Original size* keeps the size of the original image. Repacking fails if the files no longer fit.
   - *Smallest that fits* builds the smallest image that holds the files.
   - *Custom* takes bytes, or a number followed by `K`, `M` or `G`, for example `3G` or `3500M`.
 - **Image name.** The output is `<name>.img`. Same naming rules as a workspace.
