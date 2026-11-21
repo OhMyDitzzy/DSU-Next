@@ -279,8 +279,10 @@ A cancellation request arriving after the final commit can still yield success.
 ## Filesystem behavior
 
 Files are written to temporary siblings, flushed, and published after the input
-has closed successfully. A new file is published through a hard link to avoid
-clobbering an existing name. Replacement requires an atomic filesystem move.
+has closed successfully. A new file uses a move without `REPLACE_EXISTING`, so
+an existing destination is handled by the conflict policy. Hard links are not
+used: Android's app SELinux policy denies creating them even in private storage.
+Replacement requires an atomic filesystem move.
 Filesystem capability failures return errors while preserving the existing
 destination. Temporary files are cleaned in `finally`; cleanup failures are
 included in the result.
@@ -312,9 +314,16 @@ special mode bits. Symlink modes are never changed.
 ## Development
 
 The module uses compile SDK 36, minimum SDK 29, and JVM target 17. JUnit 4 is a
-test dependency only. Regression tests cover conflicts, streaming failures,
+test dependency only. AndroidX Test dependencies are used only by device tests.
+Regression tests cover conflicts, streaming failures,
 cancellation, workspace boundaries, symlinks, recursive operations, permissions,
 and result reporting.
+
+`FileManagerDeviceTest` runs under an Android app UID in private internal storage.
+It covers importing `bootanimation.zip` into `system/media`, creating and copying
+files, and conflict handling. It can be run on a connected device with
+`./gradlew :file-manager:connectedDebugAndroidTest`; host tests alone cannot catch
+Android SELinux restrictions.
 
 The app depends on `:file-manager`. `GsiFileEditor` adapts the generic backend to
 Yuki's sidecars. Its `ChangeListener` receives every committed entry, including

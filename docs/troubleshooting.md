@@ -50,6 +50,7 @@ adb shell pm grant com.ditzzy.dsunext android.permission.READ_LOGS
 | Incomplete import | The import did not finish. Delete the workspace and import again. |
 | Repack fails after your edits | The files no longer fit the original size. Repack with *Smallest that fits* or a larger custom size. |
 | An entry already exists | Choose another name, keep both, replace a file, or explicitly merge folders. |
+| Importing a file reports access denied | Older builds used hard links to publish new files, which Android blocks for normal apps. Update to a build with the file import fix. Image permissions do not grant access to working files or picker documents. |
 | An interrupted edit needs recovery | Re-import the original image into a new workspace before editing or repacking. Existing workspace files remain in private storage. |
 | A workspace from an older version is missing | Legacy workspaces in `/data/local/dsu-next-workspace` are not migrated automatically. Export them with the older version and import the image again. |
 | The repacked image does not boot | Check that the bootloader is unlocked, see the [AVB footer](edit-gsi.md#avb-footer), and that you did not remove or break files the system needs. Reinstall from your backup of the original image. |

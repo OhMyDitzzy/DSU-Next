@@ -67,6 +67,49 @@ class FileManagerTest {
     }
 
     @Test
+    fun aDestinationCreatedWhileReadingIsNotOverwritten() {
+        val result = manager.execute(FileRequest.CreateFile("data", InputSource {
+            File(root, "data").writeText("appeared during import")
+            ByteArrayInputStream("imported content".toByteArray())
+        }))
+        assertEquals(FileErrorCode.ALREADY_EXISTS, failure(result).code)
+        assertEquals("appeared during import", File(root, "data").readText())
+        assertEquals(listOf("data"), root.list()!!.sorted())
+    }
+
+    @Test
+    fun keepBothHandlesADestinationCreatedWhileReadingWithoutReopeningTheSource() {
+        var opened = 0
+        val result = success(manager.execute(FileRequest.CreateFile("data.zip", InputSource {
+            opened++
+            File(root, "data.zip").writeText("appeared during import")
+            ByteArrayInputStream("imported content".toByteArray())
+        }, conflict = ConflictPolicy.KEEP_BOTH)))
+        assertEquals(1, opened)
+        assertEquals("data (1).zip", (result.value as FileValue.Destination).path)
+        assertEquals("appeared during import", File(root, "data.zip").readText())
+        assertEquals("imported content", File(root, "data (1).zip").readText())
+        assertEquals(listOf("data (1).zip", "data.zip"), root.list()!!.sorted())
+    }
+
+    @Test
+    fun aNewFileIsOnlyPublishedAfterItsInputIsClosed() {
+        var closed = false
+        success(manager.execute(FileRequest.CreateFile("data", InputSource {
+            object : ByteArrayInputStream("content".toByteArray()) {
+                override fun close() {
+                    assertFalse(File(root, "data").exists())
+                    closed = true
+                    super.close()
+                }
+            }
+        })))
+        assertTrue(closed)
+        assertEquals("content", File(root, "data").readText())
+        assertEquals(listOf("data"), root.list()!!.sorted())
+    }
+
+    @Test
     fun skipAndKeepBothPreserveTheOriginal() {
         File(root, "file.txt").writeText("old")
         val skipped = success(manager.execute(FileRequest.CreateFile("file.txt", conflict = ConflictPolicy.SKIP)))

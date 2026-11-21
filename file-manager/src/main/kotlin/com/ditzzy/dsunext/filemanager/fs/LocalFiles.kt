@@ -186,8 +186,8 @@ internal class LocalFiles(val paths: WorkspacePaths, private val naming: Collisi
                     if (policy == ConflictPolicy.REPLACE) {
                         Files.move(temp, destination, ATOMIC_MOVE, REPLACE_EXISTING)
                     } else {
-                        // Publishing a completed inode through a new link cannot clobber an existing name.
-                        Files.createLink(destination, temp)
+                        // Android blocks hard links for app UIDs. Keep replacement explicit when moving the staged file.
+                        Files.move(temp, destination)
                     }
                     context.change(if (replacing) ChangeKind.REPLACED else change,
                         paths.relative(destination), source?.let(paths::relative))
