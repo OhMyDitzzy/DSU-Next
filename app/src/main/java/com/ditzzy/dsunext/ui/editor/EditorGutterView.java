@@ -65,7 +65,7 @@ public final class EditorGutterView extends View {
             int logical = lineAt(offset);
             if (starts[logical] != offset) continue;
             paint.setColor(MaterialColors.getColor(this, logical == selected
-                    ? com.google.android.material.R.attr.colorPrimary : com.google.android.material.R.attr.colorOnSurfaceVariant));
+                    ? androidx.appcompat.R.attr.colorPrimary : com.google.android.material.R.attr.colorOnSurfaceVariant));
             canvas.drawText(Integer.toString(logical + 1), getWidth() - dp(12), layout.getLineBaseline(visual) - top, paint);
         }
     }
