@@ -201,7 +201,7 @@ jobs:
           key: ${{ steps.cfg.outputs.abis }}
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v4       
 
       - name: Build
         env:
@@ -213,8 +213,29 @@ jobs:
           DSU_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           DSU_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
+          set -euo pipefail
           chmod +x gradlew
-          python3 build.py --type "$BUILD_TYPE" --abi "$ABIS" --apk-type "$APK_TYPE" --out dist
+
+          for attempt in 1 2 3; do
+            echo "Build attempt $attempt/3"
+
+            if python3 build.py \
+              --type "$BUILD_TYPE" \
+              --abi "$ABIS" \
+              --apk-type "$APK_TYPE" \
+              --out dist; then
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 3 ]; then
+              echo "::error::Build failed after 3 attempts."
+              exit 1
+            fi
+
+            delay=$((attempt * 30))
+            echo "Build failed. Retrying in ${delay}s..."
+            sleep "$delay"
+          done
 
       - name: List the APKs
         run: |
