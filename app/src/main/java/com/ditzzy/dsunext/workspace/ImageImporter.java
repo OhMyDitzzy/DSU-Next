@@ -15,6 +15,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.Properties;
 
 public final class ImageImporter {
@@ -57,9 +59,9 @@ public final class ImageImporter {
         try (ImageSource source = new ImageSource(pfd, sourceName)) {
             reporter.log("- Reading " + sourceName);
             File staging = new File(workspace, WorkspaceStore.STAGING_DIR);
-            String imagePath = prepareImage(source, staging, reporter);
+            File image = prepareImage(source, staging, reporter);
 
-            long imageSize = new File(imagePath).length();
+            long imageSize = image.length();
             long free = WorkspaceStore.baseDir().getUsableSpace();
             if (free < imageSize) {
                 throw new IOException("Not enough free space in /data: the image needs about "
@@ -68,7 +70,7 @@ public final class ImageImporter {
 
             reporter.progress(-1);
             ExtractResult result = Yuki.extractImage(
-                    new File(imagePath), workspace, WorkspaceStore.PARTITION, reporter::log);
+                    image, workspace, WorkspaceStore.PARTITION, reporter::log);
             for (String warning : result.getWarnings()) {
                 reporter.log("! " + warning);
             }
@@ -107,13 +109,14 @@ public final class ImageImporter {
         }
     }
 
-    /** Returns the path of a raw ext4 or EROFS image, staging a copy only when it has to. */
-    private static String prepareImage(ImageSource source, File staging, JobReporter reporter)
+    static File prepareImage(ImageSource source, File staging, JobReporter reporter)
             throws IOException {
         ImageFormat.Container kind = ImageFormat.detect(source);
         if (kind.isRawImage()) {
             reporter.log("- Raw " + kind + " image");
-            return source.path();
+            if (source.localFile() != null) return source.localFile();
+            // Native extraction opens a path, so picker input needs an app-owned file first.
+            return stageRawImage(source, staging, reporter);
         }
         if (kind == ImageFormat.Container.UNKNOWN) {
             throw new IOException("Unsupported file: expected an ext4 or EROFS image, or a zip, "
@@ -134,7 +137,7 @@ public final class ImageImporter {
         try (ImageSource inner = new ImageSource(extracted)) {
             ImageFormat.Container innerKind = ImageFormat.detect(inner);
             if (innerKind.isRawImage()) {
-                return extracted.getAbsolutePath();
+                return extracted;
             }
             if (innerKind == ImageFormat.Container.SPARSE) {
                 reporter.log("- Sparse image, converting to a raw image");
@@ -148,13 +151,59 @@ public final class ImageImporter {
         throw new IOException("The archive does not contain an ext4 or EROFS image");
     }
 
-    private static String requireRaw(File raw) throws IOException {
+    private static File stageRawImage(ImageSource source, File staging, JobReporter reporter)
+            throws IOException {
+        long expected = source.size();
+        long free = staging.getParentFile().getUsableSpace();
+        if (expected > free) {
+            throw new IOException("Not enough free space in /data to copy the selected image: "
+                    + mb(expected) + " MB needed, " + mb(free) + " MB are free");
+        }
+        if (!staging.isDirectory() && !staging.mkdirs()) {
+            throw new IOException("Cannot create " + staging);
+        }
+        reporter.log("- Copying the selected image into the workspace");
+        File raw = new File(staging, RAW_IMAGE);
+        OutputStream created = Files.newOutputStream(raw.toPath(),
+                StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+        try {
+            try (OutputStream output = created; InputStream input = source.openStream()) {
+                byte[] buffer = new byte[BUFFER];
+                long written = 0L;
+                int lastPercent = -1;
+                int read;
+                while ((read = input.read(buffer)) != -1) {
+                    output.write(buffer, 0, read);
+                    written += read;
+                    int percent = expected > 0L ? (int) Math.min(99L, written * 100L / expected) : -1;
+                    if (percent != lastPercent) {
+                        lastPercent = percent;
+                        reporter.progress(percent);
+                    }
+                }
+                if (expected > 0L && written != expected) {
+                    throw new IOException("The selected image changed while copying: expected "
+                            + expected + " bytes, read " + written);
+                }
+            }
+            return requireRaw(raw);
+        } catch (IOException | RuntimeException failure) {
+            try {
+                Files.deleteIfExists(raw.toPath());
+            } catch (IOException cleanup) {
+                failure.addSuppressed(cleanup);
+            }
+            throw failure;
+        }
+    }
+
+    private static File requireRaw(File raw) throws IOException {
         try (ImageSource check = new ImageSource(raw)) {
             if (!ImageFormat.detect(check).isRawImage()) {
                 throw new IOException("The image is neither ext4 nor EROFS");
             }
         }
-        return raw.getAbsolutePath();
+        return raw;
     }
 
     private static void unsparse(InputStream in, File out, JobReporter reporter) throws IOException {

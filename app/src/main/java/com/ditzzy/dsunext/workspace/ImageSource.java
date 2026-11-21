@@ -14,19 +14,19 @@ import java.util.Arrays;
 final class ImageSource implements Closeable {
 
     private final String name;
-    private final String path;
+    private final File localFile;
     private final FileChannel channel;
 
     /** Takes ownership of {@code pfd}, closing this source closes it. */
     ImageSource(ParcelFileDescriptor pfd, String name) {
         this.name = name;
-        this.path = "/proc/self/fd/" + pfd.getFd();
+        this.localFile = null;
         this.channel = new ParcelFileDescriptor.AutoCloseInputStream(pfd).getChannel();
     }
 
     ImageSource(File file) throws IOException {
         this.name = file.getName();
-        this.path = file.getAbsolutePath();
+        this.localFile = file.getAbsoluteFile();
         this.channel = FileChannel.open(file.toPath(), StandardOpenOption.READ);
     }
 
@@ -34,9 +34,9 @@ final class ImageSource implements Closeable {
         return name;
     }
 
-    /** A path the native code can open: {@code /proc/self/fd/N} for a received descriptor. */
-    String path() {
-        return path;
+    /* A picker descriptor grants reads through the channel, not access to reopen its backing path. */
+    File localFile() {
+        return localFile;
     }
 
     FileChannel channel() {

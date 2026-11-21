@@ -24,7 +24,7 @@ letter or digit, and are at most 64 characters.
 
 | Input | Handling |
 | --- | --- |
-| Raw ext4 or EROFS | Unpacked directly. |
+| Raw ext4 or EROFS | Copied from the picker descriptor into private staging storage, then unpacked. |
 | Android sparse image | Converted to a raw image before extraction. |
 | `.zip`, `.7z`, `.tar` | The most likely system image is extracted. |
 | `.gz`, `.xz`, `.tgz`, `.txz` | Decompressed, then processed as an image or tar. |
@@ -34,6 +34,13 @@ other `system*.img` names, then other image candidates. Boot, vbmeta, userdata,
 and other clearly unrelated partition names are skipped. The app checks free
 space before extraction. Failed imports are removed when possible; an incomplete
 workspace can be deleted and imported again.
+
+Raw images selected with the picker are copied through their granted file
+descriptor before native extraction. This avoids reopening a provider-owned
+file through `/proc/self/fd`, which Android can deny even when reading the
+descriptor succeeds. Copying uses a 256 KiB buffer and reports progress. Allow
+space for this temporary copy as well as the extracted files; staging is removed
+after a successful import. Images already decompressed into staging are reused.
 
 ## Edit files
 
@@ -324,6 +331,11 @@ It covers importing `bootanimation.zip` into `system/media`, creating and copyin
 files, and conflict handling. It can be run on a connected device with
 `./gradlew :file-manager:connectedDebugAndroidTest`; host tests alone cannot catch
 Android SELinux restrictions.
+
+`ImageImporterDeviceTest` covers raw ext4 and EROFS picker descriptors, reuse of
+XZ output, and staging cleanup when input changes. It exercises import preparation
+without loading a full GSI or running native extraction, and can be run with
+`./gradlew :app:connectedDebugAndroidTest`.
 
 The app depends on `:file-manager`. `GsiFileEditor` adapts the generic backend to
 Yuki's sidecars. Its `ChangeListener` receives every committed entry, including
