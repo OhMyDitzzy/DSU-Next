@@ -1,6 +1,7 @@
 package com.ditzzy.dsunext.preparation;
 
 import android.net.Uri;
+import android.util.Log;
 
 import com.ditzzy.dsunext.core.StorageManager;
 import com.ditzzy.dsunext.model.DsuConstants;
@@ -65,7 +66,7 @@ public final class Preparation {
         switch (getExtension(userSelectedFileUri)) {
             case "img":
                 source = DsuInstallationSource.singleSystemImage(
-                        userSelectedFileUri, storageManager.getFilesizeFromUri(userSelectedFileUri));
+                        userSelectedFileUri, storageManager.getRealFilesize(userSelectedFileUri));
                 break;
             case "xz":
             case "gz":
@@ -138,13 +139,23 @@ public final class Preparation {
 
     private PreparedFile prepareImage(Uri imageFile) throws IOException {
         callbacks.onStepUpdate(InstallationStep.COMPRESSING_TO_GZ);
-        PreparedFile compressed = new FileUnpacker(
+        FileUnpacker packer = new FileUnpacker(
                 storageManager,
                 imageFile,
                 getFileName(imageFile) + ".img.gz",
                 job,
-                callbacks::onProgressUpdate).pack();
-        return new PreparedFile(compressed.getUri(), storageManager.getFilesizeFromUri(imageFile));
+                callbacks::onProgressUpdate);
+        PreparedFile compressed = packer.pack();
+
+        // DSU needs the size of the image before compression. Count what was really compressed
+        // instead of asking the document provider, whose length can be stale or wrong.
+        long imageSize = packer.getBytesRead();
+        long providerSize = storageManager.getFilesizeFromUri(imageFile);
+        if (providerSize != imageSize) {
+            Log.w("Preparation", "Provider reported " + providerSize
+                    + " bytes but " + imageSize + " bytes were read, using the latter");
+        }
+        return new PreparedFile(compressed.getUri(), imageSize);
     }
 
     private PreparedFile prepareGz(Uri gzFile) throws IOException {

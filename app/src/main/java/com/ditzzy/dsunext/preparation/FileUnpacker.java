@@ -35,6 +35,11 @@ public final class FileUnpacker {
 
     private int lastPublishedPermille = -1;
 
+    // Bytes actually read from the input by the last pack()/unpack(), as opposed to the size the
+    // document provider claims. Providers (MediaStore "msf:" ids in particular) can report a
+    // stale size for a file that was rewritten, so this is the only value worth trusting.
+    private long bytesRead = 0L;
+
     public FileUnpacker(
             StorageManager storageManager,
             Uri inputFile,
@@ -47,6 +52,11 @@ public final class FileUnpacker {
         this.progressListener = progressListener;
         this.finalFile = storageManager.createDocumentFile(outputFile);
         this.inputFileSize = storageManager.getFilesizeFromUri(inputFile);
+    }
+
+    /** Number of bytes read from the input file by the last pack() or unpack() call. */
+    public long getBytesRead() {
+        return bytesRead;
     }
 
     public PreparedFile pack() throws IOException {
@@ -91,6 +101,7 @@ public final class FileUnpacker {
             out.write(buffer, 0, read);
         }
         out.flush();
+        bytesRead = total;
     }
 
     private void updateProgress(long processedBytes) {

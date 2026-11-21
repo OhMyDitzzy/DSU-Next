@@ -175,6 +175,22 @@ public final class StorageManager {
         return FilenameUtils.getLengthFromFile(appContext, uri);
     }
 
+    /**
+     * Size of the file as the filesystem sees it (fstat), falling back to the provider's reported
+     * length. Providers can report a stale length for files that were rewritten.
+     */
+    public long getRealFilesize(Uri uri) {
+        try (android.os.ParcelFileDescriptor pfd =
+                     appContext.getContentResolver().openFileDescriptor(uri, "r")) {
+            if (pfd != null && pfd.getStatSize() >= 0L) {
+                return pfd.getStatSize();
+            }
+        } catch (IOException | RuntimeException ignored) {
+            // Fall through to the provider value
+        }
+        return getFilesizeFromUri(uri);
+    }
+
     public InputStream openInputStream(Uri uri) throws IOException {
         InputStream stream = appContext.getContentResolver().openInputStream(uri);
         if (stream == null) {
