@@ -45,6 +45,10 @@
             android:name=".activity.TrebleActivity"
             android:exported="false" />
         <activity
+            android:name=".activity.GsiTextEditorActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
             android:name=".activity.GsiFileManagerActivity"
             android:exported="false" />
         <activity

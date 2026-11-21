@@ -39,13 +39,22 @@ workspace can be deleted and imported again.
 
 Tap a ready workspace to open its extracted partition in the built-in browser.
 Tap a folder to enter it; Back moves to its parent and exits at the image root.
-The toolbar menu creates files or folders, imports a file through the system
-picker, creates a symlink, refreshes the listing, and pastes copied or cut entries.
+The **New** button creates files or folders, imports a file through the system
+picker, or creates a symlink. The toolbar menu refreshes the listing.
 
-Tap a file, hold a row, or use its options button for copy, cut, rename, delete,
-properties, image permissions, text editing, and export. The text editor supports
-UTF-8 files up to 256 KiB. Export larger or binary files and import the edited
-result. Symlinks are shown as links; their targets are inspected in Properties
+Tap a file, hold a row, or use its options button to open an action sheet for
+copy, cut, rename, delete, properties, image permissions, text editing, and export.
+The **New** button opens creation and import actions. Breadcrumbs navigate to
+parent folders, and a clipboard bar keeps **Paste** available while browsing.
+
+The text editor opens on a separate screen with a monospace workspace, line
+numbers, a cursor position indicator, undo/redo, and **Find in file**. Search is
+case-sensitive and wraps between matches. **Save** writes changes without leaving
+the editor; closing a modified document offers save or discard. Drafts, selection,
+and bounded undo history survive activity rotation in the view model. Drafts are
+not persisted across process death, so save before leaving the app for a long time.
+The editor supports UTF-8 files up to 256 KiB. Export larger or binary files and
+import the edited result. Symlinks are shown as links; their targets are inspected in Properties
 and are never opened as paths on the host device.
 
 Names containing whitespace or control characters are rejected because the

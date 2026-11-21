@@ -14,14 +14,9 @@ import com.ditzzy.dsunext.workspace.GsiFileEditor;
 import com.ditzzy.dsunext.workspace.WorkspaceJobs;
 import com.ditzzy.dsunext.workspace.WorkspaceStore;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.charset.CodingErrorAction;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
@@ -34,18 +29,11 @@ public final class GsiFileManagerViewModel extends AndroidViewModel {
             this.request = request; this.result = result; this.error = error;
         }
     }
-    public static final class Document {
-        public final String path;
-        public final String text;
-        Document(String path, String text) { this.path = path; this.text = text; }
-    }
-
     private final MutableLiveData<List<FileEntry>> entries = new MutableLiveData<>(Collections.emptyList());
     private final MutableLiveData<String> directory = new MutableLiveData<>("");
     private final MutableLiveData<Boolean> busy = new MutableLiveData<>(false);
     private final MutableLiveData<OperationProgress> progress = new MutableLiveData<>();
     private final MutableLiveData<Event<Outcome>> outcomes = new MutableLiveData<>();
-    private final MutableLiveData<Event<Document>> documents = new MutableLiveData<>();
     private final MutableLiveData<String> clipboardLabel = new MutableLiveData<>("");
     private volatile GsiFileEditor editor;
     private volatile CancellationToken cancellation;
@@ -66,7 +54,6 @@ public final class GsiFileManagerViewModel extends AndroidViewModel {
     public LiveData<Boolean> getBusy() { return busy; }
     public LiveData<OperationProgress> getProgress() { return progress; }
     public LiveData<Event<Outcome>> getOutcomes() { return outcomes; }
-    public LiveData<Event<Document>> getDocuments() { return documents; }
     public LiveData<String> getClipboardLabel() { return clipboardLabel; }
     public boolean isBusy() { return Boolean.TRUE.equals(busy.getValue()); }
     public String path() { return currentDirectory; }
@@ -109,39 +96,10 @@ public final class GsiFileManagerViewModel extends AndroidViewModel {
             return input;
         }));
     }
-    public void saveText(String path, String text) {
-        byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
-        execute(new FileRequest.WriteFile(path, () -> new ByteArrayInputStream(bytes)));
-    }
-
-    public void openText(FileEntry entry) {
+    public void clearClipboard() {
         if (isBusy()) return;
-        busy.setValue(true);
-        CancellationToken token = new CancellationToken();
-        cancellation = token;
-        WorkspaceJobs.executor().execute(() -> {
-            try {
-                GsiFileEditor session = session();
-                ByteArrayOutputStream bytes = new ByteArrayOutputStream() {
-                    @Override public synchronized void write(byte[] data, int offset, int length) {
-                        if (count + length > 256 * 1024) throw new IllegalArgumentException("Text editing is limited to 256 KiB; export larger files to edit them");
-                        super.write(data, offset, length);
-                    }
-                    @Override public synchronized void write(int value) {
-                        if (count >= 256 * 1024) throw new IllegalArgumentException("Text file is too large");
-                        super.write(value);
-                    }
-                };
-                FileResult result = session.execute(new FileRequest.ReadFile(entry.getPath(), () -> bytes), token, progress::postValue);
-                if (result instanceof FileResult.Success) {
-                    String text = StandardCharsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
-                            .onUnmappableCharacter(CodingErrorAction.REPORT).decode(ByteBuffer.wrap(bytes.toByteArray())).toString();
-                    if (text.indexOf('\0') >= 0) throw new IOException("This file is not UTF-8 text. Export it to edit with another app.");
-                    documents.postValue(new Event<>(new Document(entry.getPath(), text)));
-                } else outcomes.postValue(new Event<>(new Outcome(null, result, null)));
-            } catch (Exception error) { error(null, error); }
-            finally { busy.postValue(false); }
-        });
+        clipboard = null;
+        clipboardLabel.setValue("");
     }
 
     public void execute(FileRequest request) {

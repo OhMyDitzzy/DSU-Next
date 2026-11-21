@@ -54,4 +54,41 @@
     <string name="fm_unsupported">The filesystem does not support this operation.</string>
     <string name="fm_type_mismatch">The source and destination have different file types. Choose another name.</string>
     <string name="fm_not_empty">The folder still contains files.</string>
+    <string name="fm_image_root">Image files</string>
+    <string name="fm_create">New</string>
+    <string name="fm_create_in">Add to %1$s</string>
+    <string name="fm_empty_hint">Create a file or import one to get started.</string>
+    <string name="fm_folder_summary">%1$s · %2$s</string>
+    <string name="fm_open_folder">Open %1$s</string>
+    <string name="fm_clear_clipboard">Cancel copy or move</string>
+    <string name="fm_permission_hint">These permissions apply to the rebuilt image.</string>
+    <string name="fm_text_binary">This file is not UTF-8 text. Export it to open with another editor.</string>
+    <string name="fm_editor_loading">Opening your file…</string>
+    <string name="fm_editor_content">File content</string>
+    <string name="fm_editor_format">UTF-8 · Plain text</string>
+    <string name="fm_editor_save">Save</string>
+    <string name="fm_editor_saved">All changes saved</string>
+    <string name="fm_editor_unsaved">Unsaved changes</string>
+    <string name="fm_editor_saving">Saving…</string>
+    <string name="fm_editor_cancelled">The operation was cancelled.</string>
+    <string name="fm_editor_undo">Undo</string>
+    <string name="fm_editor_redo">Redo</string>
+    <string name="fm_editor_find">Find in file</string>
+    <string name="fm_editor_next">Next match</string>
+    <string name="fm_editor_previous">Previous match</string>
+    <string name="fm_editor_cursor">Ln %1$d, Col %2$d</string>
+    <string name="fm_editor_leave_title">Save your changes?</string>
+    <string name="fm_editor_leave_message">Your edits have not been saved to this file yet.</string>
+    <plurals name="fm_folder_count">
+        <item quantity="one">%d folder</item>
+        <item quantity="other">%d folders</item>
+    </plurals>
+    <plurals name="fm_file_count">
+        <item quantity="one">%d file</item>
+        <item quantity="other">%d files</item>
+    </plurals>
+    <plurals name="fm_editor_matches">
+        <item quantity="one">%d match</item>
+        <item quantity="other">%d matches</item>
+    </plurals>
 </resources>

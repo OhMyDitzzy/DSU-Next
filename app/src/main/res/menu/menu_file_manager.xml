@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/fm_paste" android:title="@string/fm_paste" />
-    <item android:id="@+id/fm_new_file" android:title="@string/fm_new_file" />
-    <item android:id="@+id/fm_new_folder" android:title="@string/fm_new_folder" />
-    <item android:id="@+id/fm_import" android:title="@string/fm_import" />
-    <item android:id="@+id/fm_symlink" android:title="@string/fm_symlink" />
-    <item android:id="@+id/fm_refresh" android:title="@string/fm_refresh" />
+    <item android:id="@+id/fm_refresh" android:icon="@drawable/ic_refresh" android:title="@string/fm_refresh" />
 </menu>
