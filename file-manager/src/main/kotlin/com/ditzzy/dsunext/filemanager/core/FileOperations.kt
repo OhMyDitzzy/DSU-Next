@@ -118,13 +118,14 @@ internal class FileOperations(private val paths: WorkspacePaths, naming: Collisi
 
             override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
                 visit(file, context)
-                if (attrs.isSymbolicLink) context.skip(paths.relative(file)) else setMode(file, request.mode, context)
+                if (attrs.isSymbolicLink) context.skip(paths.relative(file))
+                else if (request.applyToFiles) setMode(file, request.mode, context)
                 return FileVisitResult.CONTINUE
             }
 
             override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
                 if (exc != null) throw exc
-                setMode(dir, request.mode, context)
+                if (dir == root || request.applyToDirectories) setMode(dir, request.mode, context)
                 return FileVisitResult.CONTINUE
             }
         })

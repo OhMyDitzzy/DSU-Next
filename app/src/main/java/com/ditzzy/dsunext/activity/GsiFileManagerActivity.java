@@ -23,6 +23,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.ditzzy.dsunext.R;
 import com.ditzzy.dsunext.databinding.ActivityGsiFileManagerBinding;
 import com.ditzzy.dsunext.databinding.DialogFileInputBinding;
+import com.ditzzy.dsunext.databinding.DialogPermissionsBinding;
 import com.ditzzy.dsunext.databinding.RowFileEntryBinding;
 import com.ditzzy.dsunext.databinding.SheetFileActionsBinding;
 import com.ditzzy.dsunext.filemanager.api.*;
@@ -30,10 +31,12 @@ import com.ditzzy.dsunext.ui.Event;
 import com.ditzzy.dsunext.ui.InsetsUtils;
 import com.ditzzy.dsunext.ui.ListRow;
 import com.ditzzy.dsunext.ui.SegmentedGroup;
+import com.ditzzy.dsunext.util.ModeBits;
 import com.ditzzy.dsunext.viewmodel.GsiFileManagerViewModel;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.snackbar.Snackbar;
@@ -238,7 +241,7 @@ public final class GsiFileManagerActivity extends AppCompatActivity {
                 name -> model.execute(new FileRequest.Rename(entry.getPath(), name))));
         if (entry.getKind() == FileKind.FILE) sheetAction(content.actions, R.drawable.ic_download, R.string.fm_export,
                 () -> { model.setExportPath(entry.getPath()); saveFile.launch(entry.getName()); });
-        if (entry.getKind() != FileKind.SYMLINK && entry.getKind() != FileKind.OTHER)
+        if (entry.getKind() != FileKind.OTHER)
             sheetAction(content.actions, R.drawable.ic_settings, R.string.fm_permissions, () -> permissions(entry));
         sheetAction(content.actions, R.drawable.ic_info, R.string.fm_properties, () -> properties(entry));
         ListRow delete = ListRow.create(content.actions).icon(R.drawable.ic_delete).title(R.string.gsi_delete).onClick(v -> {
@@ -298,21 +301,84 @@ public final class GsiFileManagerActivity extends AppCompatActivity {
     }
 
     private void permissions(FileEntry entry) {
-        DialogFileInputBinding content = DialogFileInputBinding.inflate(getLayoutInflater());
-        content.inputLayout.setHint(getString(R.string.fm_mode));
-        content.inputLayout.setHelperText(getString(R.string.fm_permission_hint));
-        content.inputEdit.setText(mode(entry));
-        content.inputEdit.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
-        content.recursive.setVisibility(entry.getKind() == FileKind.DIRECTORY ? View.VISIBLE : View.GONE);
+        DialogPermissionsBinding content = DialogPermissionsBinding.inflate(getLayoutInflater());
+        int[] mode = {entry.getMode() == null ? 0644 : entry.getMode() & ModeBits.MAX};
+        boolean[] syncing = {false};
+        boolean directory = entry.getKind() == FileKind.DIRECTORY;
+        content.folderOptions.setVisibility(directory ? View.VISIBLE : View.GONE);
+
+        MaterialCheckBox[][] grid = {
+                {content.ownerRead, content.ownerWrite, content.ownerExecute},
+                {content.groupRead, content.groupWrite, content.groupExecute},
+                {content.othersRead, content.othersWrite, content.othersExecute}};
+        int[] shifts = {ModeBits.OWNER, ModeBits.GROUP, ModeBits.OTHERS};
+        int[] bits = {ModeBits.READ, ModeBits.WRITE, ModeBits.EXECUTE};
+        MaterialCheckBox[] specials = {content.specialSetuid, content.specialSetgid, content.specialSticky};
+        int[] flags = {ModeBits.SETUID, ModeBits.SETGID, ModeBits.STICKY};
+
+        Runnable render = () -> {
+            syncing[0] = true;
+            for (int row = 0; row < 3; row++)
+                for (int col = 0; col < 3; col++) grid[row][col].setChecked(ModeBits.has(mode[0], shifts[row], bits[col]));
+            for (int i = 0; i < 3; i++) specials[i].setChecked((mode[0] & flags[i]) != 0);
+            content.modeValue.setText(ModeBits.octal(mode[0]));
+            content.modeSymbolic.setText(ModeBits.symbolic(mode[0]));
+            syncing[0] = false;
+        };
+        // Checkboxes drive the number. The number field is rewritten only when it is not the one being typed in.
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 3; col++) {
+                int shift = shifts[row], bit = bits[col];
+                grid[row][col].setOnCheckedChangeListener((button, checked) -> {
+                    if (syncing[0]) return;
+                    mode[0] = ModeBits.with(mode[0], shift, bit, checked);
+                    render.run();
+                    content.inputEdit.setText(ModeBits.octal(mode[0]));
+                    content.inputLayout.setError(null);
+                });
+            }
+        }
+        for (int i = 0; i < 3; i++) {
+            int flag = flags[i];
+            specials[i].setOnCheckedChangeListener((button, checked) -> {
+                if (syncing[0]) return;
+                mode[0] = ModeBits.withSpecial(mode[0], flag, checked);
+                render.run();
+                content.inputEdit.setText(ModeBits.octal(mode[0]));
+                content.inputLayout.setError(null);
+            });
+        }
+        content.inputEdit.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence text, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence text, int start, int before, int count) {}
+            @Override public void afterTextChanged(android.text.Editable text) {
+                if (syncing[0]) return;
+                int parsed = ModeBits.parse(text);
+                if (parsed < 0) {
+                    // Keep the last valid selection on screen until the number is valid again.
+                    content.inputLayout.setError(text.length() >= 3 ? getString(R.string.fm_perm_invalid) : null);
+                    return;
+                }
+                content.inputLayout.setError(null);
+                mode[0] = parsed;
+                render.run();
+            }
+        });
+
+        render.run();
+        content.inputEdit.setText(ModeBits.octal(mode[0]));
+
         dialog = new MaterialAlertDialogBuilder(this).setIcon(R.drawable.ic_settings).setTitle(R.string.fm_permissions).setView(content.getRoot())
                 .setPositiveButton(R.string.ok, null).setNegativeButton(R.string.cancel, null).create();
         dialog.show();
         AlertDialog current = dialog;
         current.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            String value = content.inputEdit.getText().toString();
-            if (!value.matches("[0-7]{3,4}")) { content.inputLayout.setError(getString(R.string.fm_mode)); return; }
+            int value = ModeBits.parse(content.inputEdit.getText());
+            if (value < 0) { content.inputLayout.setError(getString(R.string.fm_perm_invalid)); return; }
+            boolean files = directory && content.applyFiles.isChecked();
+            boolean folders = directory && content.applyFolders.isChecked();
             current.dismiss();
-            model.execute(new FileRequest.SetPermissions(entry.getPath(), Integer.parseInt(value, 8), content.recursive.isChecked()));
+            model.execute(new FileRequest.SetPermissions(entry.getPath(), value, files || folders, files, folders));
         });
     }
 

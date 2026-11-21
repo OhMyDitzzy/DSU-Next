@@ -55,6 +55,16 @@ public class GsiMetadataTest {
         assertFalse(read("fs_config").contains("old/link"));
     }
 
+    @Test public void aNewSymlinkGetsTheStockMode() throws Exception {
+        GsiMetadata metadata = new GsiMetadata(workspace, "system");
+        metadata.begin();
+        java.nio.file.Files.createSymbolicLink(root.resolve("fresh-link"), java.nio.file.Paths.get("/system/bin/sh"));
+        metadata.apply(new FileChange(ChangeKind.CREATED, "fresh-link", null));
+        metadata.save();
+        assertTrue(read("fs_config").contains("fresh-link 0 0 0644"));
+        assertEquals(GsiMetadata.SYMLINK_MODE, metadata.mode("fresh-link", false, true));
+    }
+
     @Test public void partialCopyOnlyRecordsEntriesThatActuallyCompleted() throws Exception {
         GsiMetadata metadata = new GsiMetadata(workspace, "system");
         metadata.begin();

@@ -51,6 +51,25 @@ picker, or creates a symlink. The toolbar menu refreshes the listing.
 
 Tap a file, hold a row, or use its options button to open an action sheet for
 copy, cut, rename, delete, properties, image permissions, text editing, and export.
+
+### Image permissions
+
+**Image permissions** opens a dialog with three synchronized ways to set a mode:
+
+- **Permissions grid:** Owner, Group, and Others each have Read, Write, and Execute
+  checkboxes. Owner with all three and Group with Read only gives `0740`.
+- **Special permissions:** Set UID, Set GID, and Sticky. They start unchecked
+  unless the entry already has them.
+- **Permission number:** type a 3 or 4 digit octal mode directly. The grid and
+  the special checkboxes follow what you type, and the number follows the grid.
+
+For folders, **Apply to all files inside** and **Apply to all folders inside**
+choose what the mode reaches below the folder. The folder itself always changes.
+Leave both unchecked to change only the folder. Symlinks inside are never
+followed or changed by a folder-wide edit.
+
+A symlink's own permission can be edited directly from its action sheet. New
+symlinks are recorded as `0644`, matching how stock images list them.
 The **New** button opens creation and import actions. Breadcrumbs navigate to
 parent folders, and a clipboard bar keeps **Paste** available while browsing.
 

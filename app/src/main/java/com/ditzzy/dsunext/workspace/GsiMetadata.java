@@ -19,6 +19,8 @@ import java.util.TreeMap;
 
 /* The image's owners and modes belong in Yuki's sidecars; working files stay owned by the app. */
 public final class GsiMetadata {
+    /* Stock images list symlinks in fs_config like regular files (0644), not as 0777. */
+    public static final int SYMLINK_MODE = 0644;
     private final Path config;
     private final Path marker;
     private final Path root;
@@ -68,7 +70,7 @@ public final class GsiMetadata {
             String[] fields = value.split("\\s+");
             if (fields.length >= 3) return Integer.parseInt(fields[2], 8) & 07777;
         }
-        return symlink ? 0777 : directory ? 0755 : executable(path) ? 0755 : 0644;
+        return symlink ? SYMLINK_MODE : directory ? 0755 : executable(path) ? 0755 : 0644;
     }
 
     public void setMode(String path, int mode) throws IOException {
@@ -113,7 +115,7 @@ public final class GsiMetadata {
         boolean link = Files.isSymbolicLink(actual);
         boolean newEntry = !modes.containsKey(key);
         if (newEntry) {
-            int mode = link ? 0777 : directory ? 0755 : executable(path) ? 0755 : 0644;
+            int mode = link ? SYMLINK_MODE : directory ? 0755 : executable(path) ? 0755 : 0644;
             modes.put(key, "0 " + (!directory && !link && executable(path) ? "2000" : "0") + " "
                     + String.format(java.util.Locale.ROOT, "%04o", mode));
         }

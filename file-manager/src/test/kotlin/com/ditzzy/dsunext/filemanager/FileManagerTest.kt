@@ -366,6 +366,23 @@ class FileManagerTest {
     }
 
     @Test
+    fun recursivePermissionsCanTargetOnlyFilesOrOnlyFolders() {
+        org.junit.Assume.assumeTrue(root.toPath().fileSystem.supportedFileAttributeViews().contains("posix"))
+        File(root, "tree/sub").mkdirs()
+        File(root, "tree/data").writeText("a")
+        File(root, "tree/sub/more").writeText("b")
+        success(manager.execute(FileRequest.SetPermissions("tree", 448, recursive = true, applyToFiles = true, applyToDirectories = false)))
+        fun mode(path: String) = ((success(manager.execute(FileRequest.Stat(path))).value as FileValue.Entry).entry.mode)
+        assertEquals(448, mode("tree/data"))
+        assertEquals(448, mode("tree/sub/more"))
+        assertTrue(mode("tree/sub") != 448)
+        success(manager.execute(FileRequest.SetPermissions("tree", 488, recursive = true, applyToFiles = false, applyToDirectories = true)))
+        assertEquals(488, mode("tree"))
+        assertEquals(488, mode("tree/sub"))
+        assertEquals(448, mode("tree/data"))
+    }
+
+    @Test
     fun callbackExceptionsDoNotFailTheOperation() {
         success(manager.execute(FileRequest.CreateFile("data"), progress = ProgressListener { throw IllegalStateException("UI") }))
         assertTrue(File(root, "data").isFile)

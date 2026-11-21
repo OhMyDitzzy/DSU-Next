@@ -81,11 +81,19 @@ sealed class FileRequest {
         val recursive: Boolean = false,
     ) : FileRequest()
 
-    /** Numeric POSIX mode, e.g. 420 (0644) or 493 (0755). Symlinks are rejected. */
+    /**
+     * Numeric POSIX mode, e.g. 420 (0644) or 493 (0755). Symlinks are rejected.
+     *
+     * When [recursive] is true the mode also reaches the entries inside a folder; [applyToFiles] and
+     * [applyToDirectories] choose which kinds of entry are changed. The folder named by [path] always
+     * receives the mode itself.
+     */
     data class SetPermissions @JvmOverloads constructor(
         val path: String,
         val mode: Int,
         val recursive: Boolean = false,
+        val applyToFiles: Boolean = true,
+        val applyToDirectories: Boolean = true,
     ) : FileRequest()
 
     /** The target is stored verbatim and may be absolute or dangling. It is never followed. */

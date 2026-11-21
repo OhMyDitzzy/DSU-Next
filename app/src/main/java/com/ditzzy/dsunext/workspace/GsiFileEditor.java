@@ -90,8 +90,20 @@ public final class GsiFileEditor implements AutoCloseable {
         FileResult stat = manager.execute(new FileRequest.Stat(request.getPath()), cancellation);
         if (!(stat instanceof FileResult.Success)) return stat;
         FileEntry entry = ((FileValue.Entry) ((FileResult.Success) stat).getValue()).getEntry();
-        if (entry.getKind() == FileKind.SYMLINK) throw new IOException("Symlink permissions cannot be changed");
         String id = UUID.randomUUID().toString();
+        if (entry.getKind() == FileKind.SYMLINK) {
+            // A symlink's mode is only an entry in the image's fs_config, so it can be edited directly.
+            // The link is never followed and nothing is applied below it.
+            ArrayList<FileChange> single = new ArrayList<>();
+            long changed = 0;
+            if (metadata.mode(entry.getPath(), false, true) != request.getMode()) {
+                metadata.setMode(entry.getPath(), request.getMode());
+                single.add(new FileChange(ChangeKind.PERMISSIONS_CHANGED, entry.getPath(), null));
+                changed = 1;
+            }
+            OperationReport linkReport = new OperationReport(single, changed, Collections.emptyList(), 0, 0, 0, false, Collections.emptyList());
+            return new FileResult.Success(id, FileValue.Done.INSTANCE, linkReport);
+        }
         ArrayList<FileChange> changes = new ArrayList<>();
         ArrayList<String> skipped = new ArrayList<>();
         long[] counts = {0, 0};
@@ -107,6 +119,9 @@ public final class GsiFileEditor implements AutoCloseable {
                             counts[1]++;
                             if (skipped.size() < 256) skipped.add(relative);
                         } else {
+                            boolean top = path.equals(start);
+                            if (!top && attrs.isDirectory() && !request.getApplyToDirectories()) return FileVisitResult.CONTINUE;
+                            if (!top && !attrs.isDirectory() && !request.getApplyToFiles()) return FileVisitResult.CONTINUE;
                             if (metadata.mode(relative, attrs.isDirectory(), false) == request.getMode()) return FileVisitResult.CONTINUE;
                             metadata.setMode(relative, request.getMode());
                             counts[0]++;

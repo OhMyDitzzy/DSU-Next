@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fadeScrollbars="false"
+    android:scrollbarStyle="outsideOverlay">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="8dp">
+
+        <TextView
+            android:id="@+id/mode_value"
+            style="@style/TextAppearance.Material3.DisplaySmall"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:fontFeatureSettings="tnum"
+            android:text="0644" />
+        <TextView
+            android:id="@+id/mode_symbolic"
+            style="@style/TextAppearance.Material3.BodyMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:fontFamily="monospace"
+            android:gravity="center_horizontal"
+            android:text="rw-r--r--" />
+
+        <TextView
+            style="@style/TextAppearance.Material3.LabelLarge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/fm_perm_basic" />
+
+        <GridLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:columnCount="4">
+            <Space android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1.4" />
+            <TextView style="@style/TextAppearance.Material3.LabelMedium" android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_columnWeight="1" android:gravity="center" android:text="@string/fm_perm_read" />
+            <TextView style="@style/TextAppearance.Material3.LabelMedium" android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_columnWeight="1" android:gravity="center" android:text="@string/fm_perm_write" />
+            <TextView style="@style/TextAppearance.Material3.LabelMedium" android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_columnWeight="1" android:gravity="center" android:text="@string/fm_perm_execute" />
+
+            <TextView style="@style/TextAppearance.Material3.BodyLarge" android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_columnWeight="1.4" android:layout_gravity="center_vertical" android:text="@string/fm_perm_owner" />
+            <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/owner_read" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:contentDescription="@string/fm_perm_owner_read" />
+            <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/owner_write" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:contentDescription="@string/fm_perm_owner_write" />
+            <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/owner_execute" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:contentDescription="@string/fm_perm_owner_execute" />
+
+            <TextView style="@style/TextAppearance.Material3.BodyLarge" android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_columnWeight="1.4" android:layout_gravity="center_vertical" android:text="@string/fm_perm_group" />
+            <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/group_read" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:contentDescription="@string/fm_perm_group_read" />
+            <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/group_write" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:contentDescription="@string/fm_perm_group_write" />
+            <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/group_execute" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:contentDescription="@string/fm_perm_group_execute" />
+
+            <TextView style="@style/TextAppearance.Material3.BodyLarge" android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_columnWeight="1.4" android:layout_gravity="center_vertical" android:text="@string/fm_perm_others" />
+            <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/others_read" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:contentDescription="@string/fm_perm_others_read" />
+            <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/others_write" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:contentDescription="@string/fm_perm_others_write" />
+            <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/others_execute" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:contentDescription="@string/fm_perm_others_execute" />
+        </GridLayout>
+
+        <TextView
+            style="@style/TextAppearance.Material3.LabelLarge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/fm_perm_special" />
+        <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/special_setuid" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/fm_perm_setuid" />
+        <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/special_setgid" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/fm_perm_setgid" />
+        <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/special_sticky" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/fm_perm_sticky" />
+
+        <TextView
+            style="@style/TextAppearance.Material3.LabelLarge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/fm_perm_manual" />
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/input_layout"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:hint="@string/fm_mode"
+            app:helperText="@string/fm_permission_hint"
+            xmlns:app="http://schemas.android.com/apk/res-auto">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/input_edit"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:imeOptions="actionDone"
+                android:inputType="number"
+                android:maxLength="4"
+                android:maxLines="1" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <LinearLayout
+            android:id="@+id/folder_options"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+            <TextView
+                style="@style/TextAppearance.Material3.LabelLarge"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/fm_perm_folder" />
+            <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/apply_files" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/fm_perm_apply_files" />
+            <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/apply_folders" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/fm_perm_apply_folders" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>
