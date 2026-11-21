@@ -95,9 +95,11 @@ android {
 }
 
 dependencies {
+    testImplementation 'junit:junit:4.13.2'
     compileOnly project(':hidden-api-stub')
     implementation project(':treble')
     implementation project(':yuki')
+    implementation project(':file-manager')
 
     implementation libs.androidx.core
     implementation libs.androidx.appcompat

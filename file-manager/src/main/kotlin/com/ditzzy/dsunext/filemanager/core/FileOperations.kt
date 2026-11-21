@@ -12,8 +12,8 @@ import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 
-internal class FileOperations(private val paths: WorkspacePaths) {
-    private val files = LocalFiles(paths)
+internal class FileOperations(private val paths: WorkspacePaths, naming: CollisionNaming) {
+    private val files = LocalFiles(paths, naming)
     private val transfers = FileTransfers(files)
 
     fun execute(request: FileRequest, context: OperationContext): FileValue {

@@ -1,5 +1,7 @@
 package com.ditzzy.dsunext.workspace;
 
+import android.content.Context;
+
 import com.ditzzy.dsunext.yuki.Yuki;
 
 import org.json.JSONArray;
@@ -28,7 +30,7 @@ import java.util.Properties;
 
 public final class WorkspaceStore {
 
-    public static final String BASE_DIR = "/data/local/dsu-next-workspace";
+    private static File baseDirectory;
     public static final String PARTITION = "system";
 
     static final String PROP_FILE = "workspace.prop";
@@ -64,22 +66,31 @@ public final class WorkspaceStore {
     private WorkspaceStore() {
     }
 
+    public static synchronized void initialize(Context context) {
+        baseDirectory = new File(context.getFilesDir(), "gsi-workspaces");
+    }
+
+    public static synchronized File baseDir() {
+        if (baseDirectory == null) throw new IllegalStateException("Workspace storage has not been initialized");
+        return baseDirectory;
+    }
+
     /** Empty when libyuki is usable in this process, the reason otherwise. */
     public static String nativeError() {
         if (Yuki.isLoaded()) {
             return "";
         }
-        return "libyuki.so could not be loaded in the root process: " + Yuki.getLoadError();
+        return "libyuki.so could not be loaded in the app process: " + Yuki.getLoadError();
     }
 
     static File dir(String name) throws IOException {
         if (!WorkspaceNames.isValid(name)) {
             throw new IOException("Invalid workspace name: " + name);
         }
-        return new File(BASE_DIR, name);
+        return new File(baseDir(), name);
     }
 
-    static File existing(String name) throws IOException {
+    public static File existing(String name) throws IOException {
         File dir = dir(name);
         if (Files.isSymbolicLink(dir.toPath()) || !dir.isDirectory()) {
             throw new IOException("Workspace not found: " + name);
@@ -150,7 +161,7 @@ public final class WorkspaceStore {
 
     public static String listJson() throws JSONException {
         JSONArray array = new JSONArray();
-        File[] children = new File(BASE_DIR).listFiles();
+        File[] children = baseDir().listFiles();
         if (children != null) {
             Arrays.sort(children, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
             for (File child : children) {
@@ -187,6 +198,7 @@ public final class WorkspaceStore {
         json.put("name", name);
         json.put("path", workspace.getAbsolutePath());
         json.put("state", isReady(workspace) ? "ready" : "incomplete");
+        if (new File(workspace, ".metadata-pending").exists()) json.put("state", "recovery");
         for (String key : INFO_KEYS) {
             String value = props.getProperty(key);
             if (value != null) {

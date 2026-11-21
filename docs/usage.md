@@ -36,5 +36,5 @@ Use it to choose a GSI that matches the device. DSU Next does not check that the
 
 ## Edit your GSI
 
-**Tools > Edit your GSI** opens the GSI editor. It needs root and is covered in [Edit GSI](edit-gsi.md).
+**Tools > Edit your GSI** opens the GSI editor. It works without root, keeps workspaces in private app storage, and is covered in [Edit GSI](edit-gsi.md).
 

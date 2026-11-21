@@ -27,6 +27,8 @@ enum class ConflictPolicy { FAIL, SKIP, REPLACE, KEEP_BOTH }
 /** MERGE only merges directories; child conflicts still use [ConflictPolicy]. */
 enum class DirectoryPolicy { FAIL, MERGE }
 
+enum class CollisionNaming { NUMBERED, DASH_NUMBER }
+
 /** All paths are workspace-relative. A destination is the complete new path, not its parent. */
 sealed class FileRequest {
     data class Stat(val path: String) : FileRequest()

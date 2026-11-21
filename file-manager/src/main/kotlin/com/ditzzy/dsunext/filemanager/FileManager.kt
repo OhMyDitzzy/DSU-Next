@@ -17,9 +17,12 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 
 /** The caller supplies an existing workspace directory and closes the manager when finished. */
-class FileManager @Throws(IOException::class) constructor(workspace: File) : AutoCloseable {
+class FileManager @JvmOverloads @Throws(IOException::class) constructor(
+    workspace: File,
+    collisionNaming: CollisionNaming = CollisionNaming.NUMBERED,
+) : AutoCloseable {
     private val paths = WorkspacePaths(workspace)
-    private val operations = FileOperations(paths)
+    private val operations = FileOperations(paths, collisionNaming)
     private val workspaceLock = lockFor(paths.root)
     private val lifecycle = Any()
     private val pending = HashMap<String, CancellationToken>()
@@ -34,6 +37,7 @@ class FileManager @Throws(IOException::class) constructor(workspace: File) : Aut
         request: FileRequest,
         cancellation: CancellationToken = CancellationToken(),
         progress: ProgressListener? = null,
+        changes: ChangeListener? = null,
     ): FileResult {
         val id = UUID.randomUUID().toString()
         synchronized(lifecycle) {
@@ -41,14 +45,14 @@ class FileManager @Throws(IOException::class) constructor(workspace: File) : Aut
             pending[id] = cancellation
         }
         return try {
-            run(id, request, cancellation, progress)
+            run(id, request, cancellation, progress, changes)
         } finally {
             synchronized(lifecycle) { pending.remove(id) }
         }
     }
 
     @JvmOverloads
-    fun submit(request: FileRequest, progress: ProgressListener? = null): OperationHandle {
+    fun submit(request: FileRequest, progress: ProgressListener? = null, changes: ChangeListener? = null): OperationHandle {
         val id = UUID.randomUUID().toString()
         val cancellation = CancellationToken()
         val completion = CompletableFuture<FileResult>()
@@ -61,7 +65,7 @@ class FileManager @Throws(IOException::class) constructor(workspace: File) : Aut
             pending[id] = cancellation
             worker.execute {
                 try {
-                    completion.complete(run(id, request, cancellation, progress))
+                    completion.complete(run(id, request, cancellation, progress, changes))
                 } finally {
                     synchronized(lifecycle) { pending.remove(id) }
                 }
@@ -75,12 +79,13 @@ class FileManager @Throws(IOException::class) constructor(workspace: File) : Aut
         request: FileRequest,
         cancellation: CancellationToken,
         progress: ProgressListener?,
+        changes: ChangeListener?,
     ): FileResult {
         if (workspaceLock.isHeldByCurrentThread) {
             return FileResult.Failure(id, FileError(FileErrorCode.BUSY, null,
                 "A listener cannot execute a nested operation on the same workspace"), OperationReport())
         }
-        val context = OperationContext(id, cancellation, progress)
+        val context = OperationContext(id, cancellation, progress, changes)
         var locked = false
         val result = try {
             while (!locked) {

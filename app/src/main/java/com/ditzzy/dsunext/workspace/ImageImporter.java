@@ -40,9 +40,9 @@ public final class ImageImporter {
             if (workspace.exists()) {
                 throw new IOException("A workspace named \"" + name + "\" already exists");
             }
-            File base = new File(WorkspaceStore.BASE_DIR);
+            File base = WorkspaceStore.baseDir();
             if (!base.isDirectory() && !base.mkdirs()) {
-                throw new IOException("Cannot create " + WorkspaceStore.BASE_DIR);
+                throw new IOException("Cannot create " + WorkspaceStore.baseDir());
             }
             if (!workspace.mkdirs()) {
                 throw new IOException("Cannot create " + workspace);
@@ -60,7 +60,7 @@ public final class ImageImporter {
             String imagePath = prepareImage(source, staging, reporter);
 
             long imageSize = new File(imagePath).length();
-            long free = new File(WorkspaceStore.BASE_DIR).getUsableSpace();
+            long free = WorkspaceStore.baseDir().getUsableSpace();
             if (free < imageSize) {
                 throw new IOException("Not enough free space in /data: the image needs about "
                         + mb(imageSize) + " MB, " + mb(free) + " MB are free");

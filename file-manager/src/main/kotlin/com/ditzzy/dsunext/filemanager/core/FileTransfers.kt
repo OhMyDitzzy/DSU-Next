@@ -127,7 +127,7 @@ internal class FileTransfers(private val files: LocalFiles) {
                 context.path = paths.relative(dir)
                 paths.check(dir)
                 val requested = if (dir == source) destination else stack.peekLast().target.resolve(dir.fileName)
-                val created = files.directory(requested, conflict, context, directories == DirectoryPolicy.MERGE)
+                val created = files.directory(requested, conflict, context, directories == DirectoryPolicy.MERGE, dir)
                     ?: return FileVisitResult.SKIP_SUBTREE
                 if (dir == source) rootDestination = created.first
                 stack.addLast(DirectoryFrame(created.first, created.second, attrs))

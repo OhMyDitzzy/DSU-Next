@@ -1,14 +1,9 @@
 package com.ditzzy.dsunext.activity;
 
-import android.content.ActivityNotFoundException;
-import android.content.ClipData;
-import android.content.ClipboardManager;
-import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.StrictMode;
 import android.provider.OpenableColumns;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -47,19 +42,14 @@ import com.ditzzy.dsunext.viewmodel.EditGsiViewModel;
 import com.ditzzy.dsunext.viewmodel.EditGsiViewModel.Access;
 import com.ditzzy.dsunext.viewmodel.EditGsiViewModel.Operation;
 import com.ditzzy.dsunext.workspace.WorkspaceNames;
-import com.ditzzy.dsunext.workspace.WorkspaceStore;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
-import java.io.File;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 public class EditGsiActivity extends AppCompatActivity {
-
-    /** Folders are opened with this type by most file managers. */
-    private static final String FOLDER_MIME_TYPE = "resource/folder";
 
     private ActivityEditGsiBinding binding;
     private EditGsiViewModel viewModel;
@@ -98,7 +88,7 @@ public class EditGsiActivity extends AppCompatActivity {
                 });
 
         binding.fabImport.setOnClickListener(v -> pickImage.launch(new String[]{"*/*"}));
-        binding.messageButton.setOnClickListener(v -> viewModel.checkRoot());
+        binding.messageButton.setOnClickListener(v -> viewModel.checkAccess());
 
         viewModel = new ViewModelProvider(this).get(EditGsiViewModel.class);
         viewModel.getAccess().observe(this, access -> renderContent());
@@ -126,7 +116,6 @@ public class EditGsiActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    // region Warning and root access
 
     private void showWarningDialog() {
         warningDialog = new MaterialAlertDialogBuilder(this)
@@ -142,9 +131,7 @@ public class EditGsiActivity extends AppCompatActivity {
                 .show();
     }
 
-    // endregion
 
-    // region Content
 
     private void renderContent() {
         Access access = viewModel.getAccess().getValue();
@@ -159,11 +146,6 @@ public class EditGsiActivity extends AppCompatActivity {
         switch (access) {
             case CHECKING:
                 hideMessage();
-                binding.listSection.setVisibility(View.GONE);
-                break;
-            case NO_ROOT:
-                showStatus(R.drawable.ic_warning, R.string.gsi_no_root_title,
-                        getString(R.string.gsi_no_root_body), true);
                 binding.listSection.setVisibility(View.GONE);
                 break;
             case SERVICE_ERROR:
@@ -265,9 +247,7 @@ public class EditGsiActivity extends AppCompatActivity {
         popup.show();
     }
 
-    // endregion
 
-    // region Import
 
     private void showImportDialog(Uri uri) {
         String fileName = queryDisplayName(uri);
@@ -324,54 +304,12 @@ public class EditGsiActivity extends AppCompatActivity {
         return segment == null || segment.isEmpty() ? "gsi.img" : segment;
     }
 
-    // endregion
-
-    // region Edit with a file manager
 
     private void showEditDialog(Workspace workspace) {
-        String path = WorkspaceStore.BASE_DIR + "/" + workspace.getName();
-        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-                .setTitle(workspace.getName())
-                .setMessage(getString(R.string.gsi_edit_message, path))
-                .setPositiveButton(R.string.gsi_open, (d, which) -> openInFileManager(path))
-                .setNegativeButton(R.string.close, null)
-                .setNeutralButton(R.string.gsi_copy_path, (d, which) -> copyPath(path))
-                .create();
-        showTransient(dialog);
+        startActivity(new Intent(this, GsiFileManagerActivity.class)
+                .putExtra(GsiFileManagerActivity.EXTRA_WORKSPACE, workspace.getName()));
     }
 
-    /**
-     * Shows the "Open with" list for the workspace folder. MT Manager has to be picked there and
-     * needs root access of its own, the folder is not readable without it.
-     */
-    private void openInFileManager(String path) {
-        Intent view = new Intent(Intent.ACTION_VIEW)
-                .setDataAndType(Uri.fromFile(new File(path)), FOLDER_MIME_TYPE);
-
-        // A file:// URI is the only way to point a root file manager at /data/local, and Android
-        // rejects it unless the check is switched off for this one call
-        StrictMode.VmPolicy previous = StrictMode.getVmPolicy();
-        StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().build());
-        try {
-            startActivity(Intent.createChooser(view, getString(R.string.gsi_open_with)));
-        } catch (ActivityNotFoundException e) {
-            Toast.makeText(this, R.string.gsi_open_failed, Toast.LENGTH_LONG).show();
-        } finally {
-            StrictMode.setVmPolicy(previous);
-        }
-    }
-
-    private void copyPath(String path) {
-        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-        if (clipboard != null) {
-            clipboard.setPrimaryClip(ClipData.newPlainText("path", path));
-            Toast.makeText(this, R.string.gsi_path_copied, Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    // endregion
-
-    // region Repack
 
     private void showRepackDialog(Workspace workspace) {
         DialogRepackBinding dialogBinding = DialogRepackBinding.inflate(getLayoutInflater());
@@ -435,9 +373,7 @@ public class EditGsiActivity extends AppCompatActivity {
         viewModel.export(operation.workspace, operation.file, target);
     }
 
-    // endregion
 
-    // region Delete and info
 
     private void showDeleteDialog(Workspace workspace) {
         AlertDialog dialog = new MaterialAlertDialogBuilder(this)
@@ -462,7 +398,10 @@ public class EditGsiActivity extends AppCompatActivity {
         content.setPadding(padding, padding / 3, padding, 0);
 
         addInfoRow(content, R.drawable.ic_folder_open, R.string.gsi_info_path, info.get("path"));
-        if ("incomplete".equals(info.get("state"))) {
+        if ("recovery".equals(info.get("state"))) {
+            addInfoRow(content, R.drawable.ic_warning, R.string.gsi_info_state,
+                    getString(R.string.fm_recovery));
+        } else if ("incomplete".equals(info.get("state"))) {
             addInfoRow(content, R.drawable.ic_warning, R.string.gsi_info_state,
                     getString(R.string.gsi_info_state_incomplete));
         }
@@ -534,9 +473,7 @@ public class EditGsiActivity extends AppCompatActivity {
         parent.addView(item.getRoot());
     }
 
-    // endregion
 
-    // region Running job
 
     private void renderOperation(@Nullable Operation operation) {
         if (operation == null) {
@@ -670,9 +607,7 @@ public class EditGsiActivity extends AppCompatActivity {
         }
     }
 
-    // endregion
 
-    // region Helpers
 
     private void showMessage(@Nullable Event<UiMessage> event) {
         UiMessage message = event == null ? null : event.getContentIfNotHandled();
@@ -716,5 +651,4 @@ public class EditGsiActivity extends AppCompatActivity {
         };
     }
 
-    // endregion
 }

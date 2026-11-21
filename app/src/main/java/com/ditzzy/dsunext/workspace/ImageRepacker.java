@@ -31,6 +31,7 @@ public final class ImageRepacker {
             throw new IOException(nativeError);
         }
         File workspace = WorkspaceStore.existing(name);
+        GsiMetadata.checkHealthy(workspace);
         if (!WorkspaceStore.isReady(workspace)) {
             throw new IOException("This workspace is incomplete, delete it and import the image again");
         }

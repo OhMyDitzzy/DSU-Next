@@ -273,16 +273,13 @@
 
     <!-- Edit GSI -->
     <string name="edit_gsi">Edit your GSI</string>
-    <string name="edit_gsi_description">Unpack a GSI, edit its files with root, then repack it</string>
-    <string name="gsi_warning_title">Root and experience required</string>
-    <string name="gsi_warning_message">This feature is only for rooted devices and experienced users. Editing a GSI carelessly can leave your device unable to boot.\n\nOnly change files you understand, and keep the original image as a backup.</string>
+    <string name="edit_gsi_description">Unpack a GSI, edit its files here, then repack it without root</string>
+    <string name="gsi_warning_title">Before editing a GSI</string>
+    <string name="gsi_warning_message">Editing a GSI carelessly can leave your device unable to boot.\n\nOnly change files you understand, and keep the original image as a backup.</string>
     <string name="gsi_warning_continue">I understand</string>
     <string name="gsi_warning_back">Go back</string>
-    <string name="gsi_no_root_title">Root access required</string>
-    <string name="gsi_no_root_body">Unpacked GSI files live in /data/local, which can only be reached with root. Grant DSU Next root access in your root manager, then try again.</string>
-    <string name="gsi_service_error_title">Root service unavailable</string>
-    <string name="gsi_service_disconnected">The root service stopped unexpectedly.</string>
-    <string name="gsi_service_unavailable">The root service is not connected</string>
+    <string name="gsi_service_error_title">Workspace unavailable</string>
+    <string name="gsi_service_unavailable">Workspace storage is unavailable</string>
     <string name="gsi_try_again">Try again</string>
     <string name="gsi_workspaces">Workspaces</string>
     <string name="gsi_empty_title">No workspaces yet</string>
@@ -301,12 +298,7 @@
     <string name="gsi_delete">Delete</string>
     <string name="gsi_info">Info</string>
     <string name="gsi_incomplete">The import did not finish. Delete this workspace and import the image again.</string>
-    <string name="gsi_edit_message">Edit the files of this GSI with MT Manager. Give MT Manager root access first, then tap Open and pick it from the list.\n\n%1$s</string>
     <string name="gsi_open">Open</string>
-    <string name="gsi_open_with">Open with…</string>
-    <string name="gsi_copy_path">Copy path</string>
-    <string name="gsi_path_copied">Path copied</string>
-    <string name="gsi_open_failed">No app could open the folder. Copy the path and open it in your file manager.</string>
     <string name="gsi_repack_title">Repack %1$s</string>
     <string name="gsi_repack_size">Image size</string>
     <string name="gsi_size_original">Original size</string>

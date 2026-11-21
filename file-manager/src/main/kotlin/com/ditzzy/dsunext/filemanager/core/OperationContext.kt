@@ -47,6 +47,7 @@ internal class OperationContext(
     val id: String,
     private val cancellation: CancellationToken,
     private val listener: ProgressListener?,
+    private val changesListener: ChangeListener? = null,
 ) {
     var path: String? = null
     var bytesProcessed = 0L
@@ -67,7 +68,13 @@ internal class OperationContext(
 
     fun change(kind: ChangeKind, destination: String, source: String? = null) {
         changeCount++
-        if (changes.size < SAMPLE_LIMIT) changes += FileChange(kind, destination, source)
+        val change = FileChange(kind, destination, source)
+        if (changes.size < SAMPLE_LIMIT) changes += change
+        try {
+            changesListener?.onChange(change)
+        } catch (error: Exception) {
+            throw OperationFailure(fileError(error, destination))
+        }
     }
 
     fun skip(path: String) {

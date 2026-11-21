@@ -1,5 +1,6 @@
 package com.ditzzy.dsunext.filemanager.api
 
+import java.io.IOException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
@@ -52,4 +53,10 @@ class OperationHandle internal constructor(
     fun onComplete(listener: CompletionListener) {
         completion.thenAccept { listener.onComplete(it) }
     }
+}
+
+/* Change listeners participate in the operation, so persistence errors stop further mutations. */
+fun interface ChangeListener {
+    @Throws(IOException::class)
+    fun onChange(change: FileChange)
 }

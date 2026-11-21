@@ -22,7 +22,7 @@ import java.nio.file.attribute.BasicFileAttributeView
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.UUID
 
-internal class LocalFiles(val paths: WorkspacePaths) {
+internal class LocalFiles(val paths: WorkspacePaths, private val naming: CollisionNaming) {
     fun kind(attributes: BasicFileAttributes): FileKind = when {
         attributes.isSymbolicLink -> FileKind.SYMLINK
         attributes.isDirectory -> FileKind.DIRECTORY
@@ -114,6 +114,7 @@ internal class LocalFiles(val paths: WorkspacePaths) {
         policy: ConflictPolicy,
         context: OperationContext,
         merge: Boolean = false,
+        source: Path? = null,
     ): Pair<Path, Boolean>? {
         while (true) {
             context.path = paths.relative(requested)
@@ -122,7 +123,8 @@ internal class LocalFiles(val paths: WorkspacePaths) {
             if (merge && attributesOrNull(destination)?.isDirectory == true) return destination to false
             try {
                 Files.createDirectory(destination)
-                context.change(ChangeKind.CREATED, paths.relative(destination))
+                context.change(if (source == null) ChangeKind.CREATED else ChangeKind.COPIED,
+                    paths.relative(destination), source?.let(paths::relative))
                 return destination to true
             } catch (error: FileAlreadyExistsException) {
                 if (policy != ConflictPolicy.KEEP_BOTH && policy != ConflictPolicy.SKIP && !merge) throw error
@@ -256,7 +258,8 @@ internal class LocalFiles(val paths: WorkspacePaths) {
     private fun numbered(path: Path, index: Int, directory: Boolean): Path {
         val name = path.fileName.toString()
         val dot = if (directory) -1 else name.lastIndexOf('.').takeIf { it > 0 } ?: -1
-        val updated = if (dot < 0) "$name ($index)" else "${name.substring(0, dot)} ($index)${name.substring(dot)}"
+        val suffix = if (naming == CollisionNaming.DASH_NUMBER) "-$index" else " ($index)"
+        val updated = if (dot < 0) "$name$suffix" else "${name.substring(0, dot)}$suffix${name.substring(dot)}"
         return path.resolveSibling(updated)
     }
 }

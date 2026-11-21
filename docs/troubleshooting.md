@@ -42,16 +42,16 @@ adb shell pm grant com.ditzzy.dsunext android.permission.READ_LOGS
 
 | Problem | What to try |
 | --- | --- |
-| Root access required | Grant DSU Next root in your root manager, then try again. |
-| Root service unavailable, or the service stopped | Tap **Try again**. If it keeps happening, reopen the app. |
+| Workspace unavailable | Tap **Try again**. Check free internal storage and that the APK includes `libyuki.so` for your ABI. |
 | Unsupported file | The input is not an ext4 or EROFS image, or a zip, 7z, tar, gz or xz archive that contains one. |
 | No system image found in the archive | The archive has no image the app recognizes as the system image. The message lists up to eight entries it saw. |
 | Not enough free space in /data | Free up space. The image needs room, and so do the unpacked files. |
 | A workspace with this name already exists | Pick another name. |
 | Incomplete import | The import did not finish. Delete the workspace and import again. |
 | Repack fails after your edits | The files no longer fit the original size. Repack with *Smallest that fits* or a larger custom size. |
-| No app could open the folder | Use **Copy path** and open it in a file manager that has root access. |
-| The file manager shows an empty or locked folder | Give the file manager root access first. The folder is in `/data/local` and is not readable otherwise. |
+| An entry already exists | Choose another name, keep both, replace a file, or explicitly merge folders. |
+| An interrupted edit needs recovery | Re-import the original image into a new workspace before editing or repacking. Existing workspace files remain in private storage. |
+| A workspace from an older version is missing | Legacy workspaces in `/data/local/dsu-next-workspace` are not migrated automatically. Export them with the older version and import the image again. |
 | The repacked image does not boot | Check that the bootloader is unlocked, see the [AVB footer](edit-gsi.md#avb-footer), and that you did not remove or break files the system needs. Reinstall from your backup of the original image. |
 
 ## Reporting a bug

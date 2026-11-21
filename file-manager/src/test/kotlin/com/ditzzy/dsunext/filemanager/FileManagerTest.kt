@@ -349,6 +349,40 @@ class FileManagerTest {
     }
 
     @Test
+    fun changeListenersReceiveEveryEntryBeyondTheReportSampleLimit() {
+        File(root, "source").mkdir()
+        repeat(300) { File(root, "source/$it").createNewFile() }
+        val changes = ArrayList<FileChange>()
+        val result = success(manager.execute(FileRequest.Copy("source", "destination"),
+            changes = ChangeListener { changes += it }))
+        assertEquals(256, result.report.changes.size)
+        assertEquals(301, changes.size)
+        assertEquals(ChangeKind.COPIED, changes.first().kind)
+        assertEquals("source", changes.first().source)
+    }
+
+    @Test
+    fun changeListenerFailuresStopTheOperationAfterThePublishedChange() {
+        val result = manager.execute(FileRequest.CreateFile("data", conflict = ConflictPolicy.KEEP_BOTH),
+            changes = ChangeListener { throw java.nio.file.FileAlreadyExistsException("metadata") })
+        assertTrue(result is FileResult.Partial)
+        assertEquals(1L, result.report.changeCount)
+        assertEquals(listOf("data"), root.list()!!.sorted())
+    }
+
+    @Test
+    fun imageAdaptersCanKeepBothWithoutAddingWhitespaceToNames() {
+        File(root, "data.txt").writeText("original")
+        FileManager(root, CollisionNaming.DASH_NUMBER).use { imageManager ->
+            val result = success(imageManager.execute(FileRequest.CreateFile("data.txt",
+                text("new"), conflict = ConflictPolicy.KEEP_BOTH)))
+            assertEquals("data-1.txt", (result.value as FileValue.Destination).path)
+        }
+        assertEquals("original", File(root, "data.txt").readText())
+        assertEquals("new", File(root, "data-1.txt").readText())
+    }
+
+    @Test
     fun anOutputFailureIsPartialBecauseTheSinkMayAlreadyBeChanged() {
         File(root, "data").writeText("hello")
         val result = manager.execute(FileRequest.ReadFile("data", OutputTarget { throw IOException("sink") }))

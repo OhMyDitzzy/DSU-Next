@@ -1,13 +1,8 @@
 package com.ditzzy.dsunext.viewmodel;
 
 import android.app.Application;
-import android.content.ComponentName;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.net.Uri;
-import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
-import android.os.RemoteException;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -16,17 +11,14 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.ditzzy.dsunext.IWorkspaceCallback;
-import com.ditzzy.dsunext.IWorkspaceService;
 import com.ditzzy.dsunext.R;
+import com.ditzzy.dsunext.service.WorkspaceService;
+import com.ditzzy.dsunext.workspace.WorkspaceJobs;
 import com.ditzzy.dsunext.model.Workspace;
 import com.ditzzy.dsunext.model.WorkspaceInfo;
-import com.ditzzy.dsunext.service.WorkspaceRootService;
 import com.ditzzy.dsunext.ui.Event;
 import com.ditzzy.dsunext.ui.UiMessage;
 import com.ditzzy.dsunext.workspace.WorkspaceNames;
-import com.topjohnwu.superuser.Shell;
-import com.topjohnwu.superuser.ipc.RootService;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -36,19 +28,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-/**
- * State of the "Edit your GSI" screen: root detection, the connection to the root service, the
- * workspace list and the one job that can run at a time. It outlives rotations, so a running
- * job keeps going and its dialog is simply shown again.
- */
+/* The view model keeps the workspace list and running job across rotations. */
 public final class EditGsiViewModel extends AndroidViewModel {
 
     private static final String TAG = "EditGsiViewModel";
     private static final int MAX_LOG_CHARS = 48 * 1024;
 
-    public enum Access { CHECKING, NO_ROOT, SERVICE_ERROR, READY }
+    public enum Access { CHECKING, SERVICE_ERROR, READY }
 
     /** What the progress dialog shows. Immutable, every change is a new instance. */
     public static final class Operation {
@@ -118,31 +105,15 @@ public final class EditGsiViewModel extends AndroidViewModel {
     private final MutableLiveData<Event<UiMessage>> messages = new MutableLiveData<>();
     private final MutableLiveData<Event<WorkspaceInfo>> info = new MutableLiveData<>();
 
-    private final ExecutorService io = Executors.newSingleThreadExecutor();
+    private final ExecutorService io = WorkspaceJobs.executor();
     private final Object operationLock = new Object();
 
-    private volatile IWorkspaceService service;
+    private final WorkspaceService service;
     private Operation current;
-    private boolean bound;
     private boolean started;
     private boolean warningAccepted;
 
-    private final ServiceConnection connection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder binder) {
-            service = IWorkspaceService.Stub.asInterface(binder);
-            verifyService();
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            service = null;
-            accessDetail.postValue(getApplication().getString(R.string.gsi_service_disconnected));
-            access.postValue(Access.SERVICE_ERROR);
-        }
-    };
-
-    private final IWorkspaceCallback.Stub callback = new IWorkspaceCallback.Stub() {
+    private final WorkspaceService.Listener callback = new WorkspaceService.Listener() {
         @Override
         public void onLog(String line) {
             Operation next;
@@ -182,6 +153,7 @@ public final class EditGsiViewModel extends AndroidViewModel {
 
     public EditGsiViewModel(@NonNull Application application) {
         super(application);
+        service = new WorkspaceService(application);
     }
 
     public LiveData<Access> getAccess() {
@@ -216,54 +188,20 @@ public final class EditGsiViewModel extends AndroidViewModel {
         warningAccepted = true;
     }
 
-    /** Starts the root check once, entering the screen again from a rotation does nothing. */
     public void start() {
-        if (started) {
-            return;
-        }
+        if (started) return;
         started = true;
-        checkRoot();
+        checkAccess();
     }
 
-    /** Must be called on the main thread. */
-    public void checkRoot() {
+    public void checkAccess() {
         access.setValue(Access.CHECKING);
-
-        // A shell that fell back to a plain one stays cached, a retry has to recycle it
-        Shell cached = Shell.getCachedShell();
-        if (cached != null && !cached.isRoot()) {
-            try {
-                cached.close();
-            } catch (IOException ignored) {
-                // A new shell is requested right below either way
-            }
-        }
-        Shell.getShell(shell -> {
-            if (shell.isRoot()) {
-                connect();
-            } else {
-                access.setValue(Access.NO_ROOT);
-            }
-        });
-    }
-
-    private void connect() {
-        if (service != null) {
-            verifyService();
-            return;
-        }
-        if (bound) {
-            // Bound once but the root process went away, start over
-            RootService.unbind(connection);
-            bound = false;
-        }
-        RootService.bind(new Intent(getApplication(), WorkspaceRootService.class), connection);
-        bound = true;
+        verifyService();
     }
 
     private void verifyService() {
         io.execute(() -> {
-            IWorkspaceService s = service;
+            WorkspaceService s = service;
             if (s == null) {
                 return;
             }
@@ -276,8 +214,8 @@ public final class EditGsiViewModel extends AndroidViewModel {
                 }
                 access.postValue(Access.READY);
                 loadWorkspaces(s);
-            } catch (RemoteException e) {
-                Log.e(TAG, "Unable to talk to the root service.", e);
+            } catch (Exception e) {
+                Log.e(TAG, "Unable to open workspace storage.", e);
                 accessDetail.postValue(String.valueOf(e.getMessage()));
                 access.postValue(Access.SERVICE_ERROR);
             }
@@ -288,13 +226,13 @@ public final class EditGsiViewModel extends AndroidViewModel {
         io.execute(() -> loadWorkspaces(service));
     }
 
-    private void loadWorkspaces(@Nullable IWorkspaceService s) {
+    private void loadWorkspaces(@Nullable WorkspaceService s) {
         if (s == null) {
             return;
         }
         try {
             workspaces.postValue(Workspace.parseList(s.listWorkspaces()));
-        } catch (RemoteException | JSONException e) {
+        } catch (Exception e) {
             Log.e(TAG, "Unable to read the workspace list.", e);
             postMessage(new UiMessage(R.string.gsi_list_failed));
         }
@@ -325,7 +263,7 @@ public final class EditGsiViewModel extends AndroidViewModel {
 
     public void loadInfo(String name) {
         io.execute(() -> {
-            IWorkspaceService s = service;
+            WorkspaceService s = service;
             if (s == null) {
                 postMessage(new UiMessage(R.string.gsi_service_unavailable));
                 return;
@@ -337,7 +275,7 @@ public final class EditGsiViewModel extends AndroidViewModel {
                     return;
                 }
                 info.postValue(new Event<>(WorkspaceInfo.parse(json)));
-            } catch (RemoteException | JSONException e) {
+            } catch (Exception e) {
                 Log.e(TAG, "Unable to read the workspace details.", e);
                 postMessage(new UiMessage(R.string.gsi_info_failed));
             }
@@ -345,9 +283,9 @@ public final class EditGsiViewModel extends AndroidViewModel {
     }
 
     public void importFile(Uri uri, String sourceName, String name) {
-        publish(Operation.running(Operation.Type.IMPORT, name));
+        if (!begin(Operation.Type.IMPORT, name)) return;
         io.execute(() -> {
-            IWorkspaceService s = service;
+            WorkspaceService s = service;
             if (s == null) {
                 failJob(text(R.string.gsi_service_unavailable));
                 return;
@@ -368,16 +306,16 @@ public final class EditGsiViewModel extends AndroidViewModel {
 
     /** @param size null for the original size, "auto", or bytes with an optional K, M or G. */
     public void repack(String name, @Nullable String size, String outputName) {
-        publish(Operation.running(Operation.Type.REPACK, name));
+        if (!begin(Operation.Type.REPACK, name)) return;
         io.execute(() -> {
-            IWorkspaceService s = service;
+            WorkspaceService s = service;
             if (s == null) {
                 failJob(text(R.string.gsi_service_unavailable));
                 return;
             }
             try {
                 s.repackWorkspace(name, size, outputName, callback);
-            } catch (RemoteException e) {
+            } catch (Exception e) {
                 Log.e(TAG, "Unable to start the repack.", e);
                 failJob(describe(e));
             }
@@ -386,9 +324,9 @@ public final class EditGsiViewModel extends AndroidViewModel {
 
     /** Copies a repacked image to the file the user chose. */
     public void export(String name, String fileName, Uri target) {
-        publish(Operation.running(Operation.Type.EXPORT, name));
+        if (!begin(Operation.Type.EXPORT, name)) return;
         io.execute(() -> {
-            IWorkspaceService s = service;
+            WorkspaceService s = service;
             if (s == null) {
                 failJob(text(R.string.gsi_service_unavailable));
                 return;
@@ -408,9 +346,9 @@ public final class EditGsiViewModel extends AndroidViewModel {
     }
 
     public void delete(String name) {
-        publish(Operation.running(Operation.Type.DELETE, name));
+        if (!begin(Operation.Type.DELETE, name)) return;
         io.execute(() -> {
-            IWorkspaceService s = service;
+            WorkspaceService s = service;
             if (s == null) {
                 failJob(text(R.string.gsi_service_unavailable));
                 return;
@@ -423,7 +361,7 @@ public final class EditGsiViewModel extends AndroidViewModel {
                 } else {
                     failJob(getApplication().getString(R.string.gsi_delete_failed, name));
                 }
-            } catch (RemoteException e) {
+            } catch (Exception e) {
                 Log.e(TAG, "Unable to delete the workspace.", e);
                 failJob(describe(e));
             }
@@ -521,12 +459,12 @@ public final class EditGsiViewModel extends AndroidViewModel {
         return message == null || message.isEmpty() ? e.getClass().getSimpleName() : message;
     }
 
-    @Override
-    protected void onCleared() {
-        if (bound) {
-            RootService.unbind(connection);
-            bound = false;
+    private boolean begin(Operation.Type type, String name) {
+        synchronized (operationLock) {
+            if (current != null && current.status == Operation.Status.RUNNING) return false;
+            current = Operation.running(type, name);
+            operation.postValue(current);
+            return true;
         }
-        io.shutdownNow();
     }
 }

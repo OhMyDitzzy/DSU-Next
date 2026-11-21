@@ -28,7 +28,7 @@ DSU Next is a derivative of [DSU Sideloader](https://github.com/VegaBobo/DSU-Sid
 - **Install a GSI as a DSU** from `.img`, `.gz`, `.xz` or a DSU package `.zip`.
 - **Built-in installer** (root) that talks to the DynamicSystem API directly.
 - **Installation progress and diagnostics** read from logcat, with a plain explanation and a suggested fix for the common failures.
-- **Edit GSI** (root only for now): import an image or an archive, edit the unpacked files with a root file manager, repack to ext4 or EROFS, save the result.
+- **[Edit GSI](docs/edit-gsi.md)** without root: import an image or an archive into private app storage, edit files with the built-in file manager, then repack to ext4 or EROFS and save the result.
 - **Treble check**: Treble support and type, VNDK version, CPU architecture, partition scheme and system-as-root.
 
 ## Quick start
