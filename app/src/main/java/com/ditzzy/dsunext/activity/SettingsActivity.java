@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.ditzzy.dsunext.DsuNextApp;
 import com.ditzzy.dsunext.R;
 import com.ditzzy.dsunext.core.AppPrefs;
+import com.ditzzy.dsunext.core.LanguageManager;
 import com.ditzzy.dsunext.core.ThemeManager;
 import com.ditzzy.dsunext.databinding.ActivitySettingsBinding;
 import com.ditzzy.dsunext.model.OperationMode;
@@ -22,6 +23,7 @@ import com.ditzzy.dsunext.model.Session;
 import com.ditzzy.dsunext.model.ThemeMode;
 import com.ditzzy.dsunext.ui.ColorSwatchRow;
 import com.ditzzy.dsunext.ui.InsetsUtils;
+import com.ditzzy.dsunext.ui.LanguageDialog;
 import com.ditzzy.dsunext.ui.ListRow;
 import com.ditzzy.dsunext.ui.SegmentedGroup;
 import com.ditzzy.dsunext.util.MultiGsi;
@@ -38,6 +40,7 @@ public class SettingsActivity extends AppCompatActivity {
     private AppPrefs appPrefs;
     private Session session;
     private ThemeManager themeManager;
+    private LanguageManager languageManager;
 
     private ListRow colorRow;
     private ListRow builtinRow;
@@ -56,6 +59,7 @@ public class SettingsActivity extends AppCompatActivity {
         appPrefs = app.getAppPrefs();
         session = app.getSession();
         themeManager = app.getThemeManager();
+        languageManager = app.getLanguageManager();
         // Recreating the activity after a color change must not fold the swatches back
         colorsExpanded = savedInstanceState != null && savedInstanceState.getBoolean(STATE_COLORS_EXPANDED);
 
@@ -115,6 +119,12 @@ public class SettingsActivity extends AppCompatActivity {
             updateColorState();
         });
 
+        ListRow languageRow = ListRow.create(binding.groupAppearance)
+                .icon(R.drawable.ic_language)
+                .title(R.string.language)
+                .trailingText(getString(languageManager.getLanguage().getLabel()));
+        languageRow.onClick(v -> showLanguageDialog(languageRow));
+
         updateColorState();
         setColorsExpanded(colorsExpanded, false);
     }
@@ -167,6 +177,18 @@ public class SettingsActivity extends AppCompatActivity {
                 })
                 .setNegativeButton(R.string.cancel, null)
                 .show();
+    }
+
+    private void showLanguageDialog(ListRow languageRow) {
+        LanguageDialog.show(this, languageManager.getLanguage(), languageManager.getSystemLanguage(), language -> {
+            if (language == languageManager.getLanguage()) {
+                return;
+            }
+            // The screen is recreated when the effective language changes, but not when "follow
+            // system" resolves to the language that is already shown
+            languageRow.trailingText(getString(language.getLabel()));
+            languageManager.setLanguage(language);
+        });
     }
 
     private void buildInstallationGroup() {

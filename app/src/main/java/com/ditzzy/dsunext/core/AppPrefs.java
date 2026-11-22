@@ -23,6 +23,7 @@ public final class AppPrefs {
     public static final String THEME_MODE = "theme_mode";
     public static final String COLOR_PALETTE = "color_palette";
     public static final String DYNAMIC_COLOR = "dynamic_color";
+    public static final String LANGUAGE = "language";
 
     /** Bumped whenever the agreement text changes in a way that needs to be accepted again. */
     public static final int CURRENT_USER_AGREEMENT_VERSION = 1;

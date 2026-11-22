@@ -42,3 +42,8 @@ Use it to choose a GSI that matches the device. DSU Next does not check that the
 
 **Tools > Edit your GSI** opens the GSI editor. It works without root, keeps workspaces in private app storage, and is covered in [Edit GSI](edit-gsi.md).
 
+## Appearance and language
+
+**Settings > Appearance** has the theme (dark, light or follow the system), dynamic color, a color palette and the language.
+
+**Language** opens a dialog with **Follow system** (the default), **English** and **Bahasa Indonesia**. With **Follow system** the app uses your device language when it is translated and English otherwise. On Android 13 and newer the same choice is also available in the system settings under **App languages**. To add a language, see [Translating](../CONTRIBUTING.md#translating).

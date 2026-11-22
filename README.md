@@ -31,6 +31,7 @@ DSU Next is a derivative of [DSU Sideloader](https://github.com/VegaBobo/DSU-Sid
 - **Installation progress and diagnostics** read from logcat, with a plain explanation and a suggested fix for the common failures.
 - **[Edit GSI](docs/edit-gsi.md)** without root: import an image or an archive into private app storage, edit files with the built-in file manager, then repack to ext4 or EROFS and save the result.
 - **Treble check**: Treble support and type, VNDK version, CPU architecture, partition scheme and system-as-root.
+- **Languages**: English and Bahasa Indonesia, chosen in **Settings > Appearance > Language**. The app follows the system language by default.
 
 ## Quick start
 
@@ -41,6 +42,10 @@ DSU Next is a derivative of [DSU Sideloader](https://github.com/VegaBobo/DSU-Sid
 5. Follow the prompts for your operation mode. Without root or Shizuku the app gives you a command to run over `adb`.
 
 To keep more than one GSI, turn on **Multi-GSI** in **Settings > Installation** (root only) and see [Multi-GSI](docs/multi-gsi.md).
+
+## Contributing
+
+Bug reports, documentation, translations and code are all welcome. Read [CONTRIBUTING](CONTRIBUTING.md) to get started, including how to build the app and how to [add a language](CONTRIBUTING.md#translating). Everyone taking part is expected to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Credits
 

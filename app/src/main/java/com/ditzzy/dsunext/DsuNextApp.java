@@ -2,9 +2,11 @@ package com.ditzzy.dsunext;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.res.Configuration;
 
 import com.ditzzy.dsunext.handler.CrashHandler;
 import com.ditzzy.dsunext.core.AppPrefs;
+import com.ditzzy.dsunext.core.LanguageManager;
 import com.ditzzy.dsunext.core.SlotRegistry;
 import com.ditzzy.dsunext.core.StorageManager;
 import com.ditzzy.dsunext.core.ThemeManager;
@@ -17,6 +19,7 @@ public class DsuNextApp extends Application {
     private AppPrefs appPrefs;
     private StorageManager storageManager;
     private ThemeManager themeManager;
+    private LanguageManager languageManager;
     private Session session;
     private SlotRegistry slotRegistry;
     
@@ -44,11 +47,22 @@ public class DsuNextApp extends Application {
         // Every process needs it (the crash screen included), so it is not guarded like the crash handler
         themeManager = new ThemeManager(appPrefs);
         themeManager.install(this);
+        // Same for the language, the crash screen has to be readable too
+        languageManager = new LanguageManager(this, appPrefs);
+        languageManager.install();
         storageManager = new StorageManager(this /*, appPrefs */);
         session = new Session();
         slotRegistry = new SlotRegistry(this);
     }
     
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (languageManager != null) {
+            languageManager.onSystemConfigurationChanged();
+        }
+    }
+
     public static DsuNextApp from(Context context) {
         return (DsuNextApp) context.getApplicationContext();
     }
@@ -59,6 +73,10 @@ public class DsuNextApp extends Application {
 
     public ThemeManager getThemeManager() {
         return themeManager;
+    }
+
+    public LanguageManager getLanguageManager() {
+        return languageManager;
     }
 
     public StorageManager getStorageManager() {

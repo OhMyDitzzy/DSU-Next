@@ -212,6 +212,18 @@
     <string name="color_yellow">Yellow</string>
     <string name="color_disabled_dynamic">Disabled while dynamic color is on</string>
 
+    <!-- Language -->
+    <string name="language">Language</string>
+    <string name="language_dialog_description">Choose the language DSU Next is shown in.</string>
+    <string name="language_system">Follow system</string>
+    <string name="language_system_current">Currently %1$s</string>
+    <!-- Each language written in itself, never translated -->
+    <string name="language_english" translatable="false">English</string>
+    <string name="language_indonesian" translatable="false">Bahasa Indonesia</string>
+    <!-- Each language written in the current interface language -->
+    <string name="language_english_name">English</string>
+    <string name="language_indonesian_name">Indonesian</string>
+
     <string name="version">Version</string>
     <string name="version_info">version %1$s (%2$d)</string>
     <string name="developer_options_enabled">Developer options enabled</string>

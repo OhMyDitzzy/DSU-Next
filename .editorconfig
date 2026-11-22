@@ -1,0 +1,56 @@
+# EditorConfig is supported by Android Studio, IntelliJ, VS Code (with the EditorConfig
+# extension) and most other editors. https://editorconfig.org
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Java, Kotlin and Rust
+[*.{java,kt,kts,rs}]
+indent_size = 4
+
+# Android resources and manifests
+[*.xml]
+indent_size = 4
+
+# Gradle and version catalog
+[*.{gradle,toml}]
+indent_size = 4
+
+[*.aidl]
+indent_size = 4
+
+# Workflows, issue forms and shell scripts use two spaces
+[*.{yml,yaml,sh}]
+indent_size = 2
+
+[*.py]
+indent_size = 4
+
+# Two trailing spaces are a line break in Markdown
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = off
+
+# Windows batch files need CRLF
+[*.{bat,cmd}]
+end_of_line = crlf
+
+# Never touch binary files or vendored keys
+[*.{jar,ttf,webp,png,pk8}]
+charset = unset
+end_of_line = unset
+indent_style = unset
+indent_size = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+
+[{LICENSE,NOTICE}]
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = unset

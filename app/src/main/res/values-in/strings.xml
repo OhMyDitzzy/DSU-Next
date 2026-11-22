@@ -1,0 +1,393 @@
+<resources>
+    <string name="app_name">DSU Next</string>
+    <!-- Home -->
+    <string name="clear_selected_file">Hapus file yang dipilih</string>
+    <string name="return_label">Kembali</string>
+    <string name="install_fab_description">Instal file yang dipilih</string>
+
+    <!-- User agreement -->
+    <string name="user_agreement">Perjanjian Pengguna</string>
+    <string name="user_agreement_description">Risiko, tanggung jawab, dan ketentuan penggunaan</string>
+    <string name="agreement_callout_title">Gunakan dengan risiko Anda sendiri</string>
+    <string name="agreement_callout_body">DSU Next adalah alat untuk pengembang dan pengguna tingkat lanjut. Alat ini mengubah cara perangkat Anda melakukan booting dan cara penyimpanannya dialokasikan. Dengan melanjutkan, Anda menerima semua risiko yang dijelaskan di halaman ini.</string>
+    <string name="agreement_who_title">Untuk siapa alat ini</string>
+    <string name="agreement_who_body">DSU Next dibuat untuk pengembang dan pengguna tingkat lanjut yang memahami pembaruan sistem dinamis, image GSI, dan penyimpanan Android. Jika Anda tidak yakin bisa memulihkan perangkat sendiri, jangan gunakan alat ini.</string>
+    <string name="agreement_risks_title">Risiko</string>
+    <string name="agreement_risks_body">Menginstal sistem dinamis dapat menyebabkan kehilangan data, boot yang gagal atau berulang, perangkat restart tanpa diminta, performa menurun, penyimpanan habis, dan dalam kasus terburuk, perangkat yang tidak bisa menyala lagi. Sebagian masalah baru muncul setelah instalasi selesai. Image dari sumber tidak resmi atau tidak tepercaya bisa tidak kompatibel dengan perangkat Anda atau berperilaku di luar dugaan.</string>
+    <string name="agreement_preparation_title">Sebelum melanjutkan</string>
+    <string name="agreement_preparation_body">Anda WAJIB memiliki bootloader yang sudah dibuka kuncinya. Menginstal image dengan bootloader terkunci bisa berbahaya di sebagian perangkat.\nAnda WAJIB memiliki cara untuk mengembalikan perangkat ke firmware bawaan.\nBackup seluruh data Anda DISARANKAN.\nPastikan image sesuai dengan perangkat dan versi Android Anda.</string>
+    <string name="agreement_responsibility_title">Tanggung jawab Anda</string>
+    <string name="agreement_responsibility_body">Anda sendiri yang bertanggung jawab atas apa yang Anda lakukan dengan alat ini: image yang Anda pilih, opsi yang Anda aktifkan, dan izin yang Anda berikan. Setiap kerusakan akibat kelalaian, ketidakhati-hatian, atau mengabaikan peringatan di aplikasi sepenuhnya menjadi tanggung jawab Anda.</string>
+    <string name="agreement_asis_title">Disediakan apa adanya</string>
+    <string name="agreement_asis_body">DSU Next disediakan \"apa adanya\" dan \"sebagaimana tersedia\", tanpa jaminan apa pun, baik tersurat maupun tersirat. Termasuk jaminan kesesuaian untuk tujuan tertentu, keandalan, atau bahwa alat ini akan berfungsi di perangkat Anda. Fitur dapat berubah atau berhenti berfungsi kapan saja.</string>
+    <string name="agreement_liability_title">Tanpa tanggung jawab hukum</string>
+    <string name="agreement_liability_body">Sejauh diizinkan oleh hukum, pengembang tidak bertanggung jawab atas kerusakan, kehilangan data, perangkat yang tidak berfungsi, hilangnya garansi, atau kerugian lain yang timbul akibat kelalaian Anda atau penggunaan alat ini, bahkan jika pengembang telah diberi tahu bahwa kerugian tersebut mungkin terjadi.</string>
+    <string name="agreement_third_party_title">Perangkat lunak dan image pihak ketiga</string>
+    <string name="agreement_third_party_body">DSU Next sebagian didasarkan pada DSU Sideloader dan menggunakan pustaka sumber terbuka di bawah lisensinya masing-masing. Pengembang tidak menyediakan, memverifikasi, atau mendukung image sistem apa pun yang Anda instal dan tidak bertanggung jawab atasnya.</string>
+    <string name="agreement_accept_title">Menyetujui</string>
+    <string name="agreement_accept_body">Mengetuk \"Saya setuju\" berarti Anda telah membaca, memahami, dan menerima halaman ini. Jika Anda tidak setuju, tutup aplikasi dan jangan gunakan.</string>
+    <string name="agreement_scroll_hint">Gulir sampai akhir untuk melanjutkan</string>
+    <string name="agree">Saya setuju</string>
+    <string name="decline">Tolak</string>
+
+    <!-- About -->
+    <string name="about">Tentang</string>
+    <string name="about_description">Kredit, perjanjian, dan lainnya…</string>
+    <string name="app_icon_description">Ikon DSU Next</string>
+    <string name="application">Aplikasi</string>
+    <string name="developer_github">Pengembang di GitHub</string>
+    <string name="developer_github_description">Ditzzy (OhMyDitzzy)</string>
+    <string name="credits">Kredit</string>
+    <string name="credit_base_project">DSU Sideloader</string>
+    <string name="credit_base_project_description">Proyek asal DSU Next, oleh VegaBobo dan kontributor</string>
+
+    <!-- Crash screen -->
+    <string name="crash_title">Aplikasi berhenti</string>
+    <string name="crash_description">DSU Next mengalami masalah tak terduga dan harus berhenti. Salin log di bawah dan sertakan saat Anda melaporkan masalah ini.</string>
+    <string name="crash_log_label">Log kerusakan</string>
+    <string name="crash_no_log">Tidak ada log kerusakan.</string>
+    <string name="copy_log">Salin log</string>
+    <string name="restart">Mulai ulang</string>
+
+    <!-- ADB screen extras -->
+    <string name="copy_command_description">Salin perintah</string>
+
+    <!-- Warning cards -->
+    <string name="unsupported">Tidak didukung</string>
+    <string name="device_unsupported_description">Perangkat Anda tidak mendukung partisi dinamis (DSU membutuhkan partisi dinamis).</string>
+
+    <string name="setup_storage">Atur penyimpanan</string>
+    <string name="setup_storage_description">Anda perlu memilih sebuah folder sebagai penyimpanan aplikasi (dibutuhkan untuk menyimpan file sementara).\n\nSilakan pilih atau buat folder baru, lalu izinkan akses ke folder tersebut.</string>
+    <string name="setup">Atur</string>
+
+    <string name="storage_warning">Peringatan penyimpanan</string>
+    <string name="storage_warning_description">Ruang penyimpanan kosong Anda kurang dari %1$s%%, proses instalasi akan gagal. Silakan kosongkan sebagian ruang.</string>
+    <string name="continue_anyway">Tetap lanjutkan</string>
+
+    <string name="missing_permission">Izin belum diberikan</string>
+    <string name="missing_permission_description">DSU Next membutuhkan izin READ_LOGS (yang memungkinkan pembacaan logcat).\nIzin ini dipakai untuk mengetahui progres instalasi dan mendiagnosis galat pada instalasi DSU.\n\n** Memberikan izin ini mungkin memerlukan aplikasi dimulai ulang.</string>
+    <string name="granting_permission">Memberikan izin, DSU Next akan dimulai ulang sebentar lagi…</string>
+    <string name="grant_permission_failed">Tidak dapat memberikan READ_LOGS secara otomatis. Coba lagi, atau jalankan lewat adb:\npm grant %1$s android.permission.READ_LOGS</string>
+
+    <!-- Installation card -->
+    <string name="select_gsi_info">Pilih file yang akan diinstal</string>
+    <string name="dsu_already_installed">Sudah ada instalasi DSU.</string>
+    <string name="selected_file">File yang dipilih</string>
+    <string name="file_unsupported">File tidak didukung</string>
+    <string name="select_file">Pilih file</string>
+    <string name="clear">Hapus</string>
+    <string name="install">Instal</string>
+
+    <!-- Installation dialog -->
+    <string name="proceed_installation">Lanjutkan instalasi?</string>
+    <string name="proceed_installation_description">Instalasi akan dilakukan dengan parameter berikut:</string>
+
+    <!-- Discard installed DSU dialog -->
+    <string name="discard_dsu_question">Buang instalasi?</string>
+    <string name="dsu_already_installed_warning">Semua data di DSU yang terinstal akan DIHAPUS setelah dibuang, yakin?</string>
+
+    <!-- Preparation -->
+    <string name="decompressing_gz">Mengekstrak file gz…</string>
+    <string name="decompressing_xz">Mengekstrak file xz…</string>
+    <string name="compressing_to_gz">Menyiapkan file image…</string>
+    <string name="extracting_file">Mengekstrak file…</string>
+    <string name="copying_file">Menyalin file…</string>
+    <string name="processing">Memproses…</string>
+
+    <!-- Installation -->
+    <string name="installation_prompt">Permintaan instalasi ditampilkan, menunggu konfirmasi pengguna untuk melanjutkan..</string>
+    <string name="creating_partition">Membuat partisi %1$s</string>
+    <string name="installing_partition">Memproses partisi %1$s…</string>
+    <string name="installing">Menginstal…</string>
+
+    <!-- ADB install -->
+    <string name="require_adb_cmd_to_continue">Persiapan selesai, sebuah perintah diperlukan untuk melanjutkan instalasi.</string>
+    <string name="see_commands">Lihat perintah</string>
+
+    <!-- Installation errors -->
+    <string name="already_running_dsu">Menginstal DSU saat DSU yang terinstal sedang berjalan tidak didukung, silakan mulai ulang perangkat ke OS bawaan.</string>
+
+    <string name="discard_dsu_otg">Sudah ada instalasi DSU, buang untuk melanjutkan?\n\n**Semua data di instalasi DSU akan dihapus.</string>
+    <string name="discarding">Membuang…</string>
+    <string name="discard_dsu">Buang DSU</string>
+
+    <string name="allocation_error">Galat alokasi</string>
+    <string name="allocation_error_description">Alokasi di kartu SD tidak berfungsi, ada beberapa perbaikan yang bisa dicoba:\n - Gunakan modul yang menyertakan perbaikan sepolicy untuk gsid.\n - Lepas kartu SD (opsi ini bisa diatur permanen di pengaturan).</string>
+    <string name="allocation_error_action">Lepas SD dan coba lagi</string>
+
+    <string name="storage_error">Galat penyimpanan</string>
+    <string name="storage_error_description">Android membutuhkan ruang penyimpanan kosong minimal %1$s%% untuk melanjutkan instalasi, kosongkan sebagian ruang lalu coba lagi.</string>
+
+    <string name="fs_features_error">Fitur FS tidak tersedia</string>
+    <string name="fs_features_error_description">Kernel Anda kemungkinan mendaftarkan f2fs di jalur yang berbeda dari yang diharapkan daemon GSI, ada beberapa perbaikan yang bisa dicoba:\n - Gunakan modul yang menyertakan binary gsid yang menangani f2fs_dev.\n - Ganti kernel.</string>
+
+    <string name="selinux_error">Galat SELinux</string>
+    <string name="selinux_error_description">Sepertinya penolakan SELinux menghalangi instalasi DSU, ada beberapa perbaikan yang bisa dicoba:\n - Gunakan modul yang menyertakan perbaikan sepolicy untuk gsid.\n - Jika Anda memakai kartu SD, coba lepas kartunya (ada opsinya di bagian pengaturan).\n - Ubah SELinux ke permissive (tidak disarankan, melemahkan keamanan perangkat Anda).</string>
+    <string name="selinux_error_action">Coba lagi dengan permissive</string>
+
+    <string name="extents_error_title">Galat extent</string>
+    <string name="extents_error_description">Pada perangkat Android 10, image/sistem file harus memiliki lebih dari 512 extent, ada beberapa perbaikan yang bisa dicoba:\n - Gunakan modul yang menyertakan binary gsid yang sudah dipatch.</string>
+
+    <string name="failed_create_partition">Gagal membuat partisi %1$s.</string>
+    <string name="unknown_error">Galat tidak dikenal.</string>
+    <string name="error">Galat</string>
+    <string name="try_again">Coba lagi</string>
+    <string name="view_logs">Lihat log</string>
+    <string name="installation_canceled">Instalasi dibatalkan.</string>
+
+    <!-- Cancel installation dialog -->
+    <string name="cancel_installation_question">Batalkan instalasi?</string>
+    <string name="cancel_installation_description">Semua progres akan hilang, yakin?</string>
+
+    <!-- Installation finished card -->
+    <string name="installation_finished_rootless">Image berhasil diinstal, periksa notifikasi Anda untuk boot ke sistem dinamis.</string>
+    <string name="installation_finished">Instalasi selesai.</string>
+    <string name="multi_gsi_installation_finished_description">GSI diinstal di slotnya sendiri. Mulai ulang untuk boot ke GSI tersebut, atau buang.</string>
+    <string name="reboot_into_dsu">Reboot ke DSU</string>
+
+    <!-- Userdata card -->
+    <string name="userdata_size">Ukuran userdata</string>
+    <string name="userdata_size_info">Ukuran dalam gigabyte</string>
+    <string name="allowed_userdata_allocation">Maksimum yang tersedia untuk dialokasikan: %1$sGB</string>
+
+    <!-- Image size card -->
+    <string name="image_size">Ukuran image</string>
+    <string name="image_size_info">Ukuran dalam byte</string>
+    <string name="not_recommended_option">Opsi ini sangat tidak disarankan!</string>
+
+    <!-- Image size dialog -->
+    <string name="dialog_image_size">Atur ukuran image?</string>
+    <string name="dialog_image_size_description">DSU Next akan mengatur parameter ini secara otomatis, mengatur ukuran image secara manual sangat tidak disarankan.</string>
+    <string name="set_anyway">Tetap atur</string>
+
+    <!-- What is DSU card -->
+    <string name="what_is_dsu">Apa itu DSU?</string>
+    <string name="what_is_dsu_description">DSU (Dynamic System Updates) adalah fitur yang diperkenalkan di Android 10 yang memungkinkan pengembang menguji image sistem Android tanpa menyentuh partisi perangkat. Sejak Android 11, DSU juga bisa mengganti beberapa partisi sekaligus.</string>
+    <string name="view_docs">Lihat dokumentasi</string>
+    <string name="learn_more">Pelajari lebih lanjut</string>
+
+    <!-- Settings screen -->
+    <string name="settings">Pengaturan</string>
+
+    <string name="experimental_feature">Fitur eksperimental</string>
+    <string name="experimental_feature_description">Fitur ini sedang diuji dan mungkin tidak stabil, yakin?</string>
+
+    <string name="builtin_installer">Penginstal bawaan</string>
+    <string name="builtin_installer_description">Lebih cepat, memakai API internal untuk menginstal image secara langsung</string>
+    <string name="builtin_installer_unsupported">Tidak didukung di Android 10</string>
+    <string name="requires_root">Membutuhkan root</string>
+
+    <string name="unmount_sd_title">Lepas SD</string>
+    <string name="unmount_sd_description">Lepas kartu SD sementara saat menginstal</string>
+
+    <string name="warning_storage_check_title">Peringatan</string>
+    <string name="warning_storage_check_description">Instalasi DSU akan mengalokasikan sebagian ruang kosong di perangkat Anda, menonaktifkan pemeriksaan penyimpanan dapat menyebabkan galat.\nOpsi ini tidak disarankan. Lanjutkan hanya jika Anda tahu apa yang Anda lakukan!</string>
+
+    <string name="storage_check_title">Nonaktifkan pemeriksaan penyimpanan</string>
+    <string name="storage_check_description">Nonaktifkan pemeriksaan penyimpanan userdata, tidak disarankan</string>
+
+    <string name="full_logcat_logging_title">Pencatatan logcat penuh</string>
+    <string name="full_logcat_logging_description">Bagian log akan menangkap log tanpa filter, dapat menurunkan performa aplikasi</string>
+
+    <string name="keep_screen_on">Biarkan layar menyala</string>
+
+    <string name="installation">Instalasi</string>
+    <string name="developer_options">Opsi pengembang</string>
+    <string name="other">Lainnya</string>
+    <string name="operation_mode">Mode operasi</string>
+
+    <!-- Appearance -->
+    <string name="appearance">Tampilan</string>
+    <string name="theme">Tema</string>
+    <string name="theme_dark">Gelap</string>
+    <string name="theme_light">Terang</string>
+    <string name="theme_system">Ikuti sistem</string>
+    <string name="dynamic_color">Warna dinamis</string>
+    <string name="dynamic_color_description">Gunakan warna dari wallpaper Anda</string>
+    <string name="dynamic_color_unsupported">Membutuhkan Android 12 atau lebih baru</string>
+    <string name="color">Warna</string>
+    <string name="color_red">Merah</string>
+    <string name="color_green">Hijau</string>
+    <string name="color_blue">Biru</string>
+    <string name="color_yellow">Kuning</string>
+    <string name="color_disabled_dynamic">Dinonaktifkan saat warna dinamis aktif</string>
+
+    <!-- Language -->
+    <string name="language">Bahasa</string>
+    <string name="language_dialog_description">Pilih bahasa tampilan DSU Next.</string>
+    <string name="language_system">Ikuti sistem</string>
+    <string name="language_system_current">Saat ini %1$s</string>
+    <string name="language_english_name">Inggris</string>
+    <string name="language_indonesian_name">Bahasa Indonesia</string>
+
+    <string name="version">Versi</string>
+    <string name="version_info">versi %1$s (%2$d)</string>
+    <string name="developer_options_enabled">Opsi pengembang diaktifkan</string>
+    <string name="developer_options_disabled">Opsi pengembang dinonaktifkan</string>
+
+    <!-- ADB screen -->
+    <string name="adb_how_to_adb_shell">Untuk memulai instalasi di perangkat tanpa root, Anda perlu menjalankan perintah ini di adb shell:</string>
+    <string name="adb_how_to_shell">Jika Anda menjalankan adb shell tanpa PC (mis: LADB, Rish milik Shizuku, WebADB, Bugjaeger..), jalankan perintah ini:</string>
+    <string name="adb_how_to_done">Setelah selesai, periksa notifikasi Anda untuk mengikuti proses instalasi, Anda juga boleh menutup aplikasi ini.</string>
+    <string name="copy_text">Salin teks</string>
+    <string name="copied">Tersalin</string>
+
+    <!-- View logs -->
+    <string name="installation_logs">Log instalasi</string>
+    <string name="save_logs">Simpan log</string>
+    <string name="saved_logs">Log tersimpan!</string>
+    <string name="save_logs_failed">Tidak dapat menyimpan log.</string>
+
+    <!-- Tools -->
+    <string name="tools">Alat</string>
+    <string name="treble_check">Cek Treble</string>
+    <string name="treble_check_description">Cari tahu apakah perangkat Anda mendukung Project Treble</string>
+
+    <!-- Treble screen -->
+    <string name="treble_checking">Memeriksa perangkat Anda…</string>
+    <string name="treble_supported">Treble didukung</string>
+    <string name="treble_not_supported">Treble tidak didukung</string>
+    <string name="treble_supported_summary">Perangkat Anda dilengkapi Project Treble, yang memisahkan implementasi vendor dari framework Android.</string>
+    <string name="treble_not_supported_summary">Project Treble tidak terdeteksi di perangkat ini, sehingga Generic System Image (GSI) diperkirakan tidak akan berfungsi.</string>
+    <string name="treble_details">Detail</string>
+    <string name="treble_type">Tipe Treble</string>
+    <string name="treble_type_standard">Standar</string>
+    <string name="treble_type_legacy">Lawas (manifest vendor di /vendor)</string>
+    <string name="treble_vndk_version">Versi VNDK</string>
+    <string name="treble_vndk_lite">VNDK Lite</string>
+    <string name="treble_cpu_architecture">Arsitektur CPU</string>
+    <string name="treble_arch_arm32">ARM 32-bit</string>
+    <string name="treble_arch_arm32_binder64">ARM 32-bit dengan binder 64-bit</string>
+    <string name="treble_arch_arm64">ARM 64-bit</string>
+    <string name="treble_arch_x86">x86 32-bit</string>
+    <string name="treble_arch_x86_64">x86 64-bit</string>
+    <string name="treble_partition_scheme">Skema partisi</string>
+    <string name="treble_partition_virtual_ab">Virtual A/B</string>
+    <string name="treble_partition_ab">A/B</string>
+    <string name="treble_partition_a_only">A-only</string>
+    <string name="treble_system_as_root">System-as-root</string>
+    <string name="treble_unknown">Tidak diketahui</string>
+
+    <!-- Generic and multipurpose strings -->
+    <string name="no">Tidak</string>
+    <string name="yes">Ya</string>
+    <string name="ok">OK</string>
+    <string name="grant">Izinkan</string>
+    <string name="refuse">Tolak</string>
+    <string name="proceed">Lanjutkan</string>
+    <string name="cancel">Batal</string>
+    <string name="close">Tutup</string>
+    <string name="discard">Buang</string>
+    <string name="navigate_up">Kembali</string>
+
+    <!-- Edit GSI -->
+    <string name="edit_gsi">Edit GSI Anda</string>
+    <string name="edit_gsi_description">Ekstrak GSI, edit file-nya di sini, lalu kemas ulang tanpa root</string>
+    <string name="gsi_warning_title">Sebelum mengedit GSI</string>
+    <string name="gsi_warning_message">Mengedit GSI secara ceroboh dapat membuat perangkat Anda tidak bisa booting.\n\nUbah hanya file yang Anda pahami, dan simpan image asli sebagai cadangan.</string>
+    <string name="gsi_warning_continue">Saya mengerti</string>
+    <string name="gsi_warning_back">Kembali</string>
+    <string name="gsi_service_error_title">Ruang kerja tidak tersedia</string>
+    <string name="gsi_service_unavailable">Penyimpanan ruang kerja tidak tersedia</string>
+    <string name="gsi_try_again">Coba lagi</string>
+    <string name="gsi_workspaces">Ruang kerja</string>
+    <string name="gsi_empty_title">Belum ada ruang kerja</string>
+    <string name="gsi_empty_body">Impor image GSI, atau arsip yang berisi image GSI. Image akan diekstrak di sini agar bisa Anda edit.</string>
+    <string name="gsi_import">Impor</string>
+    <string name="gsi_import_fab_description">Impor image GSI</string>
+    <string name="gsi_import_title">Impor GSI</string>
+    <string name="gsi_import_source">Sumber: %1$s</string>
+    <string name="gsi_follow_filename">Gunakan nama file</string>
+    <string name="gsi_workspace_name">Nama ruang kerja</string>
+    <string name="gsi_name_invalid">Gunakan huruf, angka, titik, tanda hubung, atau garis bawah, diawali huruf atau angka</string>
+    <string name="gsi_name_taken">Sudah ada ruang kerja dengan nama ini</string>
+    <string name="gsi_imported">%1$s diimpor</string>
+    <string name="gsi_more_options">Opsi lainnya</string>
+    <string name="gsi_repack">Kemas ulang</string>
+    <string name="gsi_delete">Hapus</string>
+    <string name="gsi_info">Info</string>
+    <string name="gsi_incomplete">Impor tidak selesai. Hapus ruang kerja ini lalu impor image lagi.</string>
+    <string name="gsi_open">Buka</string>
+    <string name="gsi_repack_title">Kemas ulang %1$s</string>
+    <string name="gsi_repack_size">Ukuran image</string>
+    <string name="gsi_size_original">Ukuran asli</string>
+    <string name="gsi_size_auto">Terkecil yang muat</string>
+    <string name="gsi_size_custom">Kustom</string>
+    <string name="gsi_size_custom_hint">Ukuran, misalnya 3G atau 3500M</string>
+    <string name="gsi_size_invalid">Masukkan jumlah byte, atau angka diikuti K, M, atau G</string>
+    <string name="gsi_output_name">Nama image</string>
+    <string name="gsi_repack_erofs_note">Image EROFS selalu dibuat sekecil mungkin, jadi opsi ukuran tidak berlaku.</string>
+    <string name="gsi_repack_done">Pengemasan ulang selesai</string>
+    <string name="gsi_repack_summary">%1$s (%2$s) sudah siap.</string>
+    <string name="gsi_repack_new_entries">%1$d file baru tidak punya metadata dan diberi izin serta label bawaan.</string>
+    <string name="gsi_save">Simpan…</string>
+    <string name="gsi_saved">Image tersimpan</string>
+    <string name="gsi_delete_title">Hapus %1$s?</string>
+    <string name="gsi_delete_message">File hasil ekstrak dari ruang kerja ini akan dihapus dari perangkat. Tindakan ini tidak bisa dibatalkan.</string>
+    <string name="gsi_deleted">%1$s dihapus</string>
+    <string name="gsi_delete_failed">Tidak dapat menghapus %1$s</string>
+    <string name="gsi_importing">Mengimpor %1$s…</string>
+    <string name="gsi_repacking">Mengemas ulang %1$s…</string>
+    <string name="gsi_saving">Menyimpan image…</string>
+    <string name="gsi_deleting">Menghapus %1$s…</string>
+    <string name="gsi_failed_import">Impor gagal</string>
+    <string name="gsi_failed_repack">Pengemasan ulang gagal</string>
+    <string name="gsi_failed_save">Penyimpanan gagal</string>
+    <string name="gsi_failed_delete">Penghapusan gagal</string>
+    <string name="gsi_list_failed">Tidak dapat membaca daftar ruang kerja</string>
+    <string name="gsi_info_failed">Tidak dapat membaca detail ruang kerja</string>
+    <string name="gsi_open_file_failed">Tidak dapat membuka file</string>
+    <string name="gsi_info_name">Nama</string>
+    <string name="gsi_info_path">Lokasi</string>
+    <string name="gsi_info_state">Status</string>
+    <string name="gsi_info_state_incomplete">Impor tidak lengkap</string>
+    <string name="gsi_info_source">Diimpor dari</string>
+    <string name="gsi_info_imported">Diimpor pada</string>
+    <string name="gsi_info_fs">Sistem file</string>
+    <string name="gsi_info_mount">Titik mount</string>
+    <string name="gsi_info_image_size">Ukuran image asli</string>
+    <string name="gsi_info_extracted">Ukuran hasil ekstrak</string>
+    <string name="gsi_info_contents">Isi</string>
+    <string name="gsi_info_contents_value">%1$d file, %2$d folder, %3$d symlink</string>
+    <string name="gsi_info_android">Android</string>
+    <string name="gsi_info_android_value">%1$s (API %2$s)</string>
+    <string name="gsi_info_build">Build</string>
+    <string name="gsi_info_fingerprint">Fingerprint</string>
+    <string name="gsi_info_block_size">Ukuran blok</string>
+    <string name="gsi_info_uuid">UUID</string>
+    <string name="gsi_info_repack">Pengemasan ulang terakhir</string>
+
+    <!-- Multi-GSI -->
+    <string name="multi_gsi">Multi-GSI</string>
+    <string name="multi_gsi_description">Simpan beberapa GSI terinstal dan beralih di antaranya</string>
+    <string name="multi_gsi_summary">Setiap GSI yang diinstal dengan Multi-GSI berada di slot DSU-nya sendiri dengan userdata sendiri. Pilih salah satu untuk booting, tanpa perlu membuang yang lain.</string>
+    <string name="multi_gsi_installed">GSI terinstal</string>
+    <string name="multi_gsi_empty">Belum ada GSI yang terinstal. Aktifkan Multi-GSI di Pengaturan, lalu instal GSI dari layar utama.</string>
+    <string name="multi_gsi_active">Aktif</string>
+    <string name="multi_gsi_slot_id">Slot %1$s</string>
+    <string name="multi_gsi_default_label">GSI bawaan</string>
+    <string name="multi_gsi_unsupported">Multi-GSI membutuhkan root dan Android 11 atau lebih baru.</string>
+    <string name="multi_gsi_unavailable">Tidak dapat menghubungi layanan DSU untuk membaca GSI yang terinstal. Pastikan akses root sudah diberikan, lalu buka kembali layar ini.</string>
+    <string name="multi_gsi_details">Detail: %1$s</string>
+    <string name="multi_gsi_in_use">Sebuah DSU sedang berjalan. Reboot ke sistem normal Anda untuk beralih atau menghapus GSI.</string>
+    <string name="multi_gsi_disabled_hint">Multi-GSI nonaktif, sehingga instalasi baru tetap menggantikan DSU yang terinstal. Aktifkan di Pengaturan > Instalasi.</string>
+    <string name="multi_gsi_switch">Beralih ke GSI ini</string>
+    <string name="multi_gsi_switch_title">Beralih ke %1$s?</string>
+    <string name="multi_gsi_switch_message">Perangkat akan booting ke GSI ini sekali. Reboot berikutnya kembali ke sistem normal Anda, dan Anda bisa beralih lagi dari sini.</string>
+    <string name="multi_gsi_switch_reboot">Beralih &amp; reboot</string>
+    <string name="multi_gsi_switch_only">Beralih saja</string>
+    <string name="multi_gsi_switch_failed">Tidak dapat beralih ke GSI itu.</string>
+    <string name="multi_gsi_switch_done">GSI dipilih. GSI ini akan booting saat Anda menyalakan ulang perangkat.</string>
+    <string name="multi_gsi_rename">Ganti nama</string>
+    <string name="multi_gsi_name_empty">Masukkan nama</string>
+    <string name="multi_gsi_remove">Hapus</string>
+    <string name="multi_gsi_remove_question">Hapus %1$s?</string>
+    <string name="multi_gsi_remove_message">GSI beserta semua isinya akan DIHAPUS. GSI Anda yang lain tidak tersentuh.</string>
+    <string name="multi_gsi_removed">GSI dihapus.</string>
+    <string name="multi_gsi_remove_failed">Tidak dapat menghapus GSI itu.</string>
+    <string name="gsi_name">Nama GSI</string>
+    <string name="multi_gsi_setting_description">Instal setiap GSI di slotnya sendiri dan pertahankan yang lain</string>
+    <string name="multi_gsi_requires_builtin">Membutuhkan root dan Android 11 atau lebih baru</string>
+    <string name="multi_gsi_experimental_title">Multi-GSI masih eksperimental</string>
+    <string name="multi_gsi_enable_description">Multi-GSI bekerja bersama penginstal bawaan, yang juga masih eksperimental, jadi mengaktifkannya juga mengaktifkan penginstal bawaan.\n\nFitur ini mungkin tidak stabil: beralih atau menghapus GSI bisa gagal, dan instalasi yang gagal dapat meninggalkan GSI setengah terinstal yang memakan penyimpanan. Setiap GSI juga memakai penyimpanannya sendiri untuk system dan userdata.\n\nPastikan Anda bisa memulihkan perangkat sebelum melanjutkan. Aktifkan Multi-GSI?</string>
+</resources>
