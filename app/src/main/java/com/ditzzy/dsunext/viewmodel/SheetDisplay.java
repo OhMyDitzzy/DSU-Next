@@ -6,5 +6,6 @@ public enum SheetDisplay {
     CONFIRM_INSTALLATION,
     CANCEL_INSTALLATION,
     DISCARD_DSU,
+    INSTALL_FINISHED,
     VIEW_LOGS
 }

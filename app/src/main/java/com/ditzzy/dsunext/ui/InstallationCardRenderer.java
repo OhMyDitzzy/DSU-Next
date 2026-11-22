@@ -202,9 +202,7 @@ public final class InstallationCardRenderer {
             case INSTALL_SUCCESS:
                 return new Spec().text(s(R.string.installation_finished_rootless)).second(R.string.return_label, ret);
             case INSTALL_SUCCESS_REBOOT_DYN_OS:
-                return new Spec().text(s(viewModel.isMultiGsiActive()
-                                ? R.string.installation_finished
-                                : R.string.dsu_already_installed))
+                return new Spec().text(s(R.string.installation_finished))
                         .first(R.string.reboot_into_dsu, reboot)
                         .second(R.string.discard, discardDsu);
             case REQUIRES_ADB_CMD_TO_CONTINUE:

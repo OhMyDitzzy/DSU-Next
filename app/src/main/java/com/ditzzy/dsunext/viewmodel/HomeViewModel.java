@@ -657,6 +657,10 @@ public final class HomeViewModel extends AndroidViewModel {
                                     System.currentTimeMillis()));
                         }
                         setStep(InstallationStep.INSTALL_SUCCESS_REBOOT_DYN_OS);
+                        // With Multi-GSI the form stays on screen, so the result goes in a dialog
+                        if (multiGsi) {
+                            sheet.postValue(SheetDisplay.INSTALL_FINISHED);
+                        }
                     }
                 }).invoke();
     }
@@ -760,6 +764,7 @@ public final class HomeViewModel extends AndroidViewModel {
     }
 
     public void onClickRebootToDynOs() {
+        sheet.postValue(SheetDisplay.NONE);
         setStep(InstallationStep.PROCESSING);
         final boolean slotTarget = targetsInstalledSlot();
         final String slot = installSlot;
@@ -768,6 +773,7 @@ public final class HomeViewModel extends AndroidViewModel {
                 if (!service.activateSlot(slot, true)) {
                     postMessage(R.string.multi_gsi_switch_failed);
                     setStep(InstallationStep.INSTALL_SUCCESS_REBOOT_DYN_OS);
+                    sheet.postValue(SheetDisplay.INSTALL_FINISHED);
                     return;
                 }
             } else {

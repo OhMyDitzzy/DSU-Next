@@ -142,6 +142,7 @@
     <!-- Installation finished card -->
     <string name="installation_finished_rootless">Image installed successfully, check your notifications to boot into dynamic system.</string>
     <string name="installation_finished">Installation finished.</string>
+    <string name="multi_gsi_installation_finished_description">The GSI was installed in its own slot. Reboot to boot into it, or discard it.</string>
     <string name="reboot_into_dsu">Reboot into DSU</string>
 
     <!-- Userdata card -->

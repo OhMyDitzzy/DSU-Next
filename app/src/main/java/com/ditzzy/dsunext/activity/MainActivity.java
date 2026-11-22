@@ -42,6 +42,7 @@ import com.ditzzy.dsunext.service.PrivilegedService;
 import com.ditzzy.dsunext.service.PrivilegedSystemService;
 import com.ditzzy.dsunext.ui.InputRow;
 import com.ditzzy.dsunext.ui.InsetsUtils;
+import com.ditzzy.dsunext.preparation.InstallationStep;
 import com.ditzzy.dsunext.ui.InstallationCardRenderer;
 import com.ditzzy.dsunext.ui.ListRow;
 import com.ditzzy.dsunext.ui.SegmentedGroup;
@@ -326,11 +327,15 @@ public class MainActivity extends AppCompatActivity implements Shizuku.OnRequest
         boolean multiGsi = viewModel.isMultiGsiActive();
 
         // Once an installation is done, Multi-GSI keeps the form so another GSI can be added.
-        // Without Multi-GSI the form is replaced by the "installation is present" card.
+        // Without Multi-GSI the form is replaced by the card, which sits at the top.
         boolean showSelection = checksPassed && (!currentInstallation.isInstalling() || (settled && multiGsi));
         binding.installationSection.setVisibility(showSelection ? View.VISIBLE : View.GONE);
         binding.toolsSection.setVisibility(busy ? View.GONE : View.VISIBLE);
-        binding.progressCard.setVisibility(currentInstallation.isInstalling() ? View.VISIBLE : View.GONE);
+        // With Multi-GSI the finished installation is reported by a dialog, not by the card
+        boolean finishedInDialog = multiGsi
+                && currentInstallation.step == InstallationStep.INSTALL_SUCCESS_REBOOT_DYN_OS;
+        binding.progressCard.setVisibility(
+                currentInstallation.isInstalling() && !finishedInDialog ? View.VISIBLE : View.GONE);
 
         if (showSelection && currentInstallation.installable) {
             binding.fabInstall.show();
@@ -487,6 +492,17 @@ public class MainActivity extends AppCompatActivity implements Shizuku.OnRequest
                         .setMessage(R.string.dsu_already_installed_warning)
                         .setPositiveButton(R.string.discard, (d, w) -> viewModel.onClickDiscardGsi())
                         .setNegativeButton(R.string.cancel, (d, w) -> viewModel.dismissSheet())
+                        .setOnCancelListener(d -> viewModel.dismissSheet())
+                        .create());
+                break;
+            case INSTALL_FINISHED:
+                showDialog(new MaterialAlertDialogBuilder(this)
+                        .setIcon(R.drawable.ic_download)
+                        .setTitle(R.string.installation_finished)
+                        .setMessage(R.string.multi_gsi_installation_finished_description)
+                        .setPositiveButton(R.string.reboot_into_dsu, (d, w) -> viewModel.onClickRebootToDynOs())
+                        .setNegativeButton(R.string.discard, (d, w) -> viewModel.showSheet(SheetDisplay.DISCARD_DSU))
+                        .setNeutralButton(R.string.close, (d, w) -> viewModel.dismissSheet())
                         .setOnCancelListener(d -> viewModel.dismissSheet())
                         .create());
                 break;
