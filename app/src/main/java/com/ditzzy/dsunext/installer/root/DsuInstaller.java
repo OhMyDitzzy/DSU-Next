@@ -12,6 +12,7 @@ import android.util.Log;
 import com.ditzzy.dsunext.model.DsuInstallationSource;
 import com.ditzzy.dsunext.model.ImagePartition;
 import com.ditzzy.dsunext.preparation.InstallationStep;
+import com.ditzzy.dsunext.util.GsiNames;
 import com.ditzzy.dsunext.util.InstallationJob;
 
 import org.lsposed.hiddenapibypass.HiddenApiBypass;
@@ -54,7 +55,6 @@ public final class DsuInstaller extends DynamicSystemImpl {
     }
 
     private static final String TAG = "DsuInstaller";
-    private static final String DEFAULT_SLOT = "dsu";
     private static final int SHARED_MEM_SIZE = 524288;
     private static final long MIN_PROGRESS_TO_PUBLISH = 1L << 27;
 
@@ -65,18 +65,40 @@ public final class DsuInstaller extends DynamicSystemImpl {
     private final long userdataSize;
     private final DsuInstallationSource dsuInstallation;
     private final InstallationJob installationJob;
+    private final String dsuSlot;
+    private final boolean multiGsi;
     private final Callbacks callbacks;
 
+    /** Installs into the default slot and replaces nothing but a missing DSU, like a plain installer. */
     public DsuInstaller(
             Application application,
             long userdataSize,
             DsuInstallationSource dsuInstallation,
             InstallationJob installationJob,
             Callbacks callbacks) {
+        this(application, userdataSize, dsuInstallation, installationJob,
+                GsiNames.DEFAULT_SLOT, false, callbacks);
+    }
+
+    /**
+     * @param dsuSlot  the slot gsid stores the installation under.
+     * @param multiGsi when true other installed slots are left alone and only {@code dsuSlot}
+     *                 has to be free, otherwise any installed DSU blocks the installation.
+     */
+    public DsuInstaller(
+            Application application,
+            long userdataSize,
+            DsuInstallationSource dsuInstallation,
+            InstallationJob installationJob,
+            String dsuSlot,
+            boolean multiGsi,
+            Callbacks callbacks) {
         this.application = application;
         this.userdataSize = userdataSize;
         this.dsuInstallation = dsuInstallation;
         this.installationJob = installationJob;
+        this.dsuSlot = dsuSlot;
+        this.multiGsi = multiGsi;
         this.callbacks = callbacks;
     }
 
@@ -108,6 +130,25 @@ public final class DsuInstaller extends DynamicSystemImpl {
             if (!installationJob.isCancelled()) {
                 callbacks.onInstallationError(InstallationStep.ERROR, String.valueOf(e));
             }
+            if (multiGsi) {
+                // The half written slot would otherwise stay around and eat storage
+                discardPartialInstallation();
+            }
+        }
+    }
+
+    /** Throws away what was allocated so far, without touching any other installed GSI. */
+    private void discardPartialInstallation() {
+        if (!multiGsi) {
+            // Whatever was allocated so far is useless, and would block the next installation
+            remove();
+            return;
+        }
+        try {
+            abort();
+            removeSlot(dsuSlot);
+        } catch (RuntimeException e) {
+            Log.w(TAG, "Unable to discard the partial installation of slot " + dsuSlot, e);
         }
     }
 
@@ -258,13 +299,24 @@ public final class DsuInstaller extends DynamicSystemImpl {
             callbacks.onInstallationError(InstallationStep.ERROR_ALREADY_RUNNING_DYN_OS, "");
             return;
         }
-        if (isInstalled()) {
+        if (multiGsi) {
+            // Other GSIs may stay, only this slot has to be free
+            if (getInstalledSlots().contains(dsuSlot)) {
+                callbacks.onInstallationError(InstallationStep.ERROR_REQUIRES_DISCARD_DSU, "");
+                return;
+            }
+        } else if (isInstalled()) {
             callbacks.onInstallationError(InstallationStep.ERROR_REQUIRES_DISCARD_DSU, "");
             return;
         }
 
         forceStopDsu();
-        startInstallation(DEFAULT_SLOT);
+        if (!startInstallation(dsuSlot) && multiGsi) {
+            Log.e(TAG, "startInstallation() refused slot " + dsuSlot);
+            callbacks.onInstallationError(InstallationStep.ERROR,
+                    "Unable to start the installation in slot " + dsuSlot);
+            return;
+        }
         installWritablePartition("userdata", userdataSize, false);
 
         if (!installationJob.isCancelled()) {
@@ -287,8 +339,7 @@ public final class DsuInstaller extends DynamicSystemImpl {
         }
 
         if (installationJob.isCancelled()) {
-            // Whatever was allocated so far is useless, and would block the next installation
-            remove();
+            discardPartialInstallation();
             return;
         }
         finishInstallation();

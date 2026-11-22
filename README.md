@@ -4,7 +4,7 @@
 
 **A DSU installer and GSI editor for Android.**
 
-Install Generic System Images through Dynamic System Updates, and unpack, edit and repack a GSI right on the device.
+Install Generic System Images through Dynamic System Updates, keep several of them and switch between them, and unpack, edit and repack a GSI right on the device.
 
 [![License](https://img.shields.io/github/license/OhMyDitzzy/DSU-Next?style=flat-square&color=blue)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/OhMyDitzzy/DSU-Next?style=flat-square&logo=github)](https://github.com/OhMyDitzzy/DSU-Next/stargazers)
@@ -21,12 +21,13 @@ Install Generic System Images through Dynamic System Updates, and unpack, edit a
 
 DSU (Dynamic System Updates) lets you boot a different Android system image next to your installed one, without touching the device partitions. DSU Next is an app that makes this easy, and it goes one step further than a plain installer: it can open a GSI, let you change its files, and build it back into an image you can install.
 
-DSU Next is a derivative of [DSU Sideloader](https://github.com/VegaBobo/DSU-Sideloader) by VegaBobo. It keeps the installation core and adds a new interface, an on-device GSI editor, a Treble checker and a native Rust module.
+DSU Next is a derivative of [DSU Sideloader](https://github.com/VegaBobo/DSU-Sideloader) by VegaBobo. It keeps the installation core and adds a new interface, Multi-GSI, an on-device GSI editor, a Treble checker and a native Rust module.
 
 ## Features
 
 - **Install a GSI as a DSU** from `.img`, `.gz`, `.xz` or a DSU package `.zip`.
 - **Built-in installer** (root) that talks to the DynamicSystem API directly.
+- **[Multi-GSI](docs/multi-gsi.md)** (root): keep several GSIs installed, each in its own DSU slot with its own userdata, and switch between them or remove one without touching the others.
 - **Installation progress and diagnostics** read from logcat, with a plain explanation and a suggested fix for the common failures.
 - **[Edit GSI](docs/edit-gsi.md)** without root: import an image or an archive into private app storage, edit files with the built-in file manager, then repack to ext4 or EROFS and save the result.
 - **Treble check**: Treble support and type, VNDK version, CPU architecture, partition scheme and system-as-root.
@@ -38,6 +39,8 @@ DSU Next is a derivative of [DSU Sideloader](https://github.com/VegaBobo/DSU-Sid
 3. Pick a folder for the app storage when asked (it holds temporary files).
 4. Select a GSI, set the userdata size, and tap **Install**.
 5. Follow the prompts for your operation mode. Without root or Shizuku the app gives you a command to run over `adb`.
+
+To keep more than one GSI, turn on **Multi-GSI** in **Settings > Installation** (root only) and see [Multi-GSI](docs/multi-gsi.md).
 
 ## Credits
 

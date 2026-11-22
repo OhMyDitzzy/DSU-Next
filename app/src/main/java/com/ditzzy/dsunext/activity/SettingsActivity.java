@@ -24,6 +24,7 @@ import com.ditzzy.dsunext.ui.ColorSwatchRow;
 import com.ditzzy.dsunext.ui.InsetsUtils;
 import com.ditzzy.dsunext.ui.ListRow;
 import com.ditzzy.dsunext.ui.SegmentedGroup;
+import com.ditzzy.dsunext.util.MultiGsi;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public class SettingsActivity extends AppCompatActivity {
@@ -39,6 +40,8 @@ public class SettingsActivity extends AppCompatActivity {
     private ThemeManager themeManager;
 
     private ListRow colorRow;
+    private ListRow builtinRow;
+    private ListRow multiGsiRow;
     private ColorSwatchRow swatchRow;
     private boolean colorsExpanded;
 
@@ -178,14 +181,42 @@ public class SettingsActivity extends AppCompatActivity {
                         : R.string.builtin_installer_unsupported)
                 .enabled(builtinAvailable);
         boolean builtinOn = builtinAvailable && appPrefs.getBoolean(AppPrefs.USE_BUILTIN_INSTALLER);
+        builtinRow = builtin;
         builtin.toggle(builtinOn, enabled -> {
             if (!enabled) {
                 appPrefs.setBoolean(AppPrefs.USE_BUILTIN_INSTALLER, false);
+                // Multi-GSI picks slots through the built-in installer, so it cannot outlive it
+                appPrefs.setBoolean(AppPrefs.MULTI_GSI, false);
+                if (multiGsiRow != null) {
+                    multiGsiRow.checked(false);
+                }
                 return;
             }
             confirm(R.drawable.ic_warning, R.string.experimental_feature, R.string.experimental_feature_description,
                     () -> appPrefs.setBoolean(AppPrefs.USE_BUILTIN_INSTALLER, true),
                     () -> builtin.checked(false));
+        });
+
+        boolean multiSupported = MultiGsi.isSupported(session);
+        ListRow multi = ListRow.create(binding.groupInstallation)
+                .icon(R.drawable.ic_storage)
+                .title(R.string.multi_gsi)
+                .supporting(multiSupported ? R.string.multi_gsi_setting_description : R.string.multi_gsi_requires_builtin)
+                .enabled(multiSupported);
+        multiGsiRow = multi;
+        multi.toggle(multiSupported && MultiGsi.isActive(appPrefs, session), enabled -> {
+            if (!enabled) {
+                appPrefs.setBoolean(AppPrefs.MULTI_GSI, false);
+                return;
+            }
+            confirm(R.drawable.ic_warning, R.string.experimental_feature, R.string.multi_gsi_enable_description,
+                    () -> {
+                        // The slot is chosen by the built-in installer, so it comes along
+                        appPrefs.setBoolean(AppPrefs.USE_BUILTIN_INSTALLER, true);
+                        appPrefs.setBoolean(AppPrefs.MULTI_GSI, true);
+                        builtinRow.checked(true);
+                    },
+                    () -> multi.checked(false));
         });
 
         toggleRow(binding.groupInstallation, R.drawable.ic_sd_card, R.string.unmount_sd_title,

@@ -18,9 +18,13 @@ This page walks through DSU Next from the first launch to a booted DSU. For how 
 2. Set the **userdata size** in gigabytes. The card shows the maximum that can be allocated.
 3. Optionally set the **image size** in bytes. DSU Next works this out for you, so setting it by hand is strongly inadvisable and the app asks you to confirm.
 4. Tap **Install** and review the parameters in the confirmation dialog.
-5. If a DSU is already installed, the app offers to discard it. Everything stored in that DSU is deleted when you do.
+5. If a DSU is already installed, the app offers to discard it. Everything stored in that DSU is deleted when you do. With [Multi-GSI](multi-gsi.md) on (root only) there is nothing to discard: the new GSI is installed next to the others.
 
 DSU cannot be installed while a DSU is running. Reboot into your normal system first.
+
+## Multi-GSI
+
+**Tools > Multi-GSI** lists the GSIs you installed with Multi-GSI and lets you switch to one, rename it or remove it. It needs root and is covered in [Multi-GSI](multi-gsi.md).
 
 ## Treble check
 

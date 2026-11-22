@@ -5,6 +5,7 @@ import android.content.Context;
 
 import com.ditzzy.dsunext.handler.CrashHandler;
 import com.ditzzy.dsunext.core.AppPrefs;
+import com.ditzzy.dsunext.core.SlotRegistry;
 import com.ditzzy.dsunext.core.StorageManager;
 import com.ditzzy.dsunext.core.ThemeManager;
 import com.ditzzy.dsunext.model.Session;
@@ -17,6 +18,7 @@ public class DsuNextApp extends Application {
     private StorageManager storageManager;
     private ThemeManager themeManager;
     private Session session;
+    private SlotRegistry slotRegistry;
     
     @Override
     protected void attachBaseContext(Context base) {
@@ -44,6 +46,7 @@ public class DsuNextApp extends Application {
         themeManager.install(this);
         storageManager = new StorageManager(this /*, appPrefs */);
         session = new Session();
+        slotRegistry = new SlotRegistry(this);
     }
     
     public static DsuNextApp from(Context context) {
@@ -64,5 +67,9 @@ public class DsuNextApp extends Application {
 
     public Session getSession() {
         return session;
+    }
+
+    public SlotRegistry getSlotRegistry() {
+        return slotRegistry;
     }
 }

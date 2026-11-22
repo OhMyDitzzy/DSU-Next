@@ -67,6 +67,7 @@ public final class PrivilegedService extends IPrivilegedService.Stub {
     private IActivityManager activityManager;
     private IStorageManager storageManager;
     private IDynamicSystemService dynamicSystem;
+    private final GsiSlotController slotController = new GsiSlotController();
 
     // This constructor must stay public and parameterless, Shizuku and libsu instantiate it by name
     public PrivilegedService() {
@@ -83,7 +84,7 @@ public final class PrivilegedService extends IPrivilegedService.Stub {
     }
 
     // ServiceManager is a hidden API, so it has to be reached through HiddenApiBypass
-    private static IBinder getBinder(String service) {
+    static IBinder getBinder(String service) {
         try {
             Class<?> serviceManager = Class.forName("android.os.ServiceManager");
             return (IBinder) HiddenApiBypass.invoke(serviceManager, null, "getService", service);
@@ -346,5 +347,34 @@ public final class PrivilegedService extends IPrivilegedService.Stub {
     @Override
     public boolean isInstalled() {
         return dynamicSystem().isInstalled();
+    }
+
+    //
+    // Multi-GSI (DSU slots)
+    //
+
+    @Override
+    public boolean isSlotApiAvailable() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && slotController.isAvailable();
+    }
+
+    @Override
+    public List<String> getInstalledSlots() {
+        return slotController.installedSlots();
+    }
+
+    @Override
+    public String getActiveSlot() {
+        return slotController.activeSlot();
+    }
+
+    @Override
+    public boolean activateSlot(String slot, boolean oneShot) {
+        return slotController.activate(slot, oneShot);
+    }
+
+    @Override
+    public boolean removeSlot(String slot) {
+        return slotController.remove(slot);
     }
 }

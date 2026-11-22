@@ -37,4 +37,12 @@ interface IPrivilegedService {
     boolean setAshmem(in ParcelFileDescriptor fd, long size) = 4012;
     boolean submitFromAshmem(long bytes) = 4013;
     long suggestScratchSize() = 4014;
+
+    // Multi-GSI: every installed GSI lives in its own DSU slot of gsid. These never throw, a failure
+    // is reported as false, an empty list or an empty string.
+    boolean isSlotApiAvailable() = 4015;
+    List<String> getInstalledSlots() = 4016;
+    String getActiveSlot() = 4017;
+    boolean activateSlot(String slot, boolean oneShot) = 4018;
+    boolean removeSlot(String slot) = 4019;
 }

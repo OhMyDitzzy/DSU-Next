@@ -31,6 +31,7 @@ import com.ditzzy.dsunext.R;
 import com.ditzzy.dsunext.core.AppPrefs;
 import com.ditzzy.dsunext.databinding.ActivityMainBinding;
 import com.ditzzy.dsunext.databinding.RowDialogItemBinding;
+import com.ditzzy.dsunext.databinding.RowGsiNameBinding;
 import com.ditzzy.dsunext.databinding.SheetLogsBinding;
 import com.ditzzy.dsunext.model.DsuConstants;
 import com.ditzzy.dsunext.model.OperationMode;
@@ -57,6 +58,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.color.MaterialColors;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
+import com.google.android.material.textfield.TextInputEditText;
 import com.topjohnwu.superuser.Shell;
 import com.topjohnwu.superuser.ipc.RootService;
 
@@ -93,6 +95,8 @@ public class MainActivity extends AppCompatActivity implements Shizuku.OnRequest
     private boolean checksPassed = false;
 
     private AlertDialog currentDialog;
+    // Only present in the confirmation dialog while Multi-GSI is active
+    private TextInputEditText confirmNameInput;
     private BottomSheetDialog logsSheet;
     private SheetLogsBinding logsBinding;
     private boolean suppressDismissCallback = false;
@@ -232,6 +236,13 @@ public class MainActivity extends AppCompatActivity implements Shizuku.OnRequest
 
     private void buildToolsRows() {
         LinearLayout group = binding.toolsGroup;
+
+        ListRow.create(group)
+                .icon(R.drawable.ic_storage)
+                .title(R.string.multi_gsi)
+                .supporting(R.string.multi_gsi_description)
+                .trailingIcon(R.drawable.ic_chevron_right)
+                .onClick(v -> startActivity(new Intent(this, MultiGsiActivity.class)));
 
         ListRow.create(group)
                 .icon(R.drawable.ic_phone)
@@ -446,7 +457,7 @@ public class MainActivity extends AppCompatActivity implements Shizuku.OnRequest
                         .setIcon(R.drawable.ic_download)
                         .setTitle(R.string.proceed_installation)
                         .setView(buildConfirmContent())
-                        .setPositiveButton(R.string.proceed, (d, w) -> viewModel.onConfirmInstallationSheet())
+                        .setPositiveButton(R.string.proceed, (d, w) -> viewModel.onConfirmInstallationSheet(readConfirmName()))
                         .setNegativeButton(R.string.cancel, (d, w) -> viewModel.dismissSheet())
                         .setOnCancelListener(d -> viewModel.dismissSheet())
                         .create());
@@ -493,7 +504,21 @@ public class MainActivity extends AppCompatActivity implements Shizuku.OnRequest
         if (imageSize != DsuConstants.DEFAULT_IMAGE_SIZE) {
             addDialogItem(content, R.drawable.ic_description, R.string.image_size, imageSize + "b");
         }
+
+        confirmNameInput = null;
+        if (viewModel.isMultiGsiActive()) {
+            RowGsiNameBinding name = RowGsiNameBinding.inflate(LayoutInflater.from(this), content, false);
+            name.gsiNameEdit.setText(viewModel.getDefaultGsiName());
+            confirmNameInput = name.gsiNameEdit;
+            content.addView(name.getRoot());
+        }
         return content;
+    }
+
+    private String readConfirmName() {
+        return confirmNameInput == null || confirmNameInput.getText() == null
+                ? ""
+                : confirmNameInput.getText().toString();
     }
 
     private void addDialogItem(LinearLayout parent, @DrawableRes int icon, @StringRes int label, String value) {

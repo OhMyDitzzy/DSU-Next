@@ -15,6 +15,7 @@ public final class AppPrefs {
     public static final String SAF_PATH = "writable_path";
     public static final String DEVELOPER_OPTIONS = "developer_options";
     public static final String USE_BUILTIN_INSTALLER = "builtin_installer";
+    public static final String MULTI_GSI = "multi_gsi";
     public static final String KEEP_SCREEN_ON = "keep_screen_on";
     public static final String UMOUNT_SD = "umount_sd";
     public static final String DISABLE_STORAGE_CHECK = "disable_storage_check";

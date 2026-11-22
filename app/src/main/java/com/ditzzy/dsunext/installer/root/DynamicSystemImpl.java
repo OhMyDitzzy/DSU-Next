@@ -9,6 +9,8 @@ import android.os.image.IDynamicSystemService;
 import com.ditzzy.dsunext.IPrivilegedService;
 import com.ditzzy.dsunext.service.PrivilegedProvider;
 
+import java.util.List;
+
 /**
  * Proxies every call of the DynamicSystem API to the privileged service, so the installer can be
  * written as if it were talking to {@link IDynamicSystemService} directly.
@@ -102,6 +104,16 @@ public abstract class DynamicSystemImpl implements IDynamicSystemService {
     @Override
     public long suggestScratchSize() {
         return remote(IPrivilegedService::suggestScratchSize);
+    }
+
+    // Multi-GSI, these are not part of IDynamicSystemService and go straight to gsid
+
+    public List<String> getInstalledSlots() {
+        return remote(IPrivilegedService::getInstalledSlots);
+    }
+
+    public boolean removeSlot(String slot) {
+        return remote(service -> service.removeSlot(slot));
     }
 
     public void forceStopDsu() {

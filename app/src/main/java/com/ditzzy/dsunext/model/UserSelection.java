@@ -12,6 +12,8 @@ public final class UserSelection {
     private volatile long userSelectedImageSize = DsuConstants.DEFAULT_IMAGE_SIZE;
     private volatile Uri selectedFileUri = Uri.EMPTY;
     private volatile String selectedFileName = "";
+    // Multi-GSI only: what the user typed as the name of the GSI, empty means "use the file name"
+    private volatile String gsiName = "";
 
     public long getUserSelectedUserdata() {
         return userSelectedUserdata;
@@ -32,6 +34,14 @@ public final class UserSelection {
     public void setSelectedFile(Uri uri, String name) {
         this.selectedFileUri = uri;
         this.selectedFileName = name;
+    }
+
+    public String getGsiName() {
+        return gsiName;
+    }
+
+    public void setGsiName(String name) {
+        this.gsiName = name == null ? "" : name;
     }
 
     public String getUserDataSizeAsGb() {

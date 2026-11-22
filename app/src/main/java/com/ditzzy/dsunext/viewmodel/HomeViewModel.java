@@ -20,6 +20,7 @@ import com.ditzzy.dsunext.DsuNextApp;
 import com.ditzzy.dsunext.R;
 import com.ditzzy.dsunext.activity.MainActivity;
 import com.ditzzy.dsunext.core.AppPrefs;
+import com.ditzzy.dsunext.core.SlotRegistry;
 import com.ditzzy.dsunext.core.StorageManager;
 import com.ditzzy.dsunext.installer.adb.AdbInstallationHandler;
 import com.ditzzy.dsunext.installer.privileged.DsuInstallationHandler;
@@ -27,6 +28,7 @@ import com.ditzzy.dsunext.installer.privileged.LogcatDiagnostic;
 import com.ditzzy.dsunext.installer.root.DsuInstaller;
 import com.ditzzy.dsunext.model.DsuConstants;
 import com.ditzzy.dsunext.model.DsuInstallationSource;
+import com.ditzzy.dsunext.model.GsiSlotInfo;
 import com.ditzzy.dsunext.model.OperationMode;
 import com.ditzzy.dsunext.model.Session;
 import com.ditzzy.dsunext.preparation.InstallationStep;
@@ -36,13 +38,16 @@ import com.ditzzy.dsunext.ui.Event;
 import com.ditzzy.dsunext.ui.UiMessage;
 import com.ditzzy.dsunext.util.DevicePropUtils;
 import com.ditzzy.dsunext.util.FilenameUtils;
+import com.ditzzy.dsunext.util.GsiNames;
 import com.ditzzy.dsunext.util.InstallationJob;
+import com.ditzzy.dsunext.util.MultiGsi;
 import com.ditzzy.dsunext.util.OperationModeUtils;
 import com.ditzzy.dsunext.util.StorageUtils;
 import com.topjohnwu.superuser.Shell;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
@@ -63,6 +68,7 @@ public final class HomeViewModel extends AndroidViewModel {
 
     private final AppPrefs appPrefs;
     private final StorageManager storageManager;
+    private final SlotRegistry slotRegistry;
     private final Session session;
     private final ExecutorService io = Executors.newCachedThreadPool();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -89,6 +95,10 @@ public final class HomeViewModel extends AndroidViewModel {
     private volatile InstallationJob installationJob = new InstallationJob();
     private volatile LogcatDiagnostic logger;
 
+    // Multi-GSI: the slot of the installation in progress, or of the last one that finished.
+    // Empty until an installation starts, and reset whenever a new one is confirmed.
+    private volatile String installSlot = "";
+
     private volatile boolean checkDynamicPartitions = true;
     private volatile boolean checkUnavailableStorage = true;
     private volatile boolean checkReadLogsPermission = true;
@@ -103,6 +113,7 @@ public final class HomeViewModel extends AndroidViewModel {
         DsuNextApp app = DsuNextApp.from(application);
         appPrefs = app.getAppPrefs();
         storageManager = app.getStorageManager();
+        slotRegistry = app.getSlotRegistry();
         session = app.getSession();
     }
 
@@ -152,6 +163,16 @@ public final class HomeViewModel extends AndroidViewModel {
 
     public String getSelectedFilename() {
         return session.getUserSelection().getSelectedFileName();
+    }
+
+    /** True when a new installation goes to its own slot and leaves the installed GSIs alone. */
+    public boolean isMultiGsiActive() {
+        return MultiGsi.isActive(appPrefs, session);
+    }
+
+    /** What the GSI name field starts with: the selected file name without its extension. */
+    public String getDefaultGsiName() {
+        return GsiNames.labelFromFileName(session.getUserSelection().getSelectedFileName());
     }
 
     @Override
@@ -215,6 +236,15 @@ public final class HomeViewModel extends AndroidViewModel {
     public void refreshPreferences() {
         keepScreenOn.postValue(appPrefs.getBoolean(AppPrefs.KEEP_SCREEN_ON));
         disabledStorageCheck = appPrefs.getBoolean(AppPrefs.DISABLE_STORAGE_CHECK);
+
+        // "A DSU is already installed" blocks the home screen, and Multi-GSI does not want that
+        boolean stale;
+        synchronized (stateLock) {
+            stale = installation.step == InstallationStep.DSU_ALREADY_INSTALLED;
+        }
+        if (stale && isMultiGsiActive()) {
+            resetInstallationCard();
+        }
     }
 
     /**
@@ -226,10 +256,12 @@ public final class HomeViewModel extends AndroidViewModel {
 
         // Checking for an existing DSU needs MANAGE_DYNAMIC_SYSTEM, so it's root only
         if (session.isRoot() && !isInstalling()) {
+            final boolean multiGsi = isMultiGsiActive();
             PrivilegedProvider.run(service -> {
                 if (service.isInUse()) {
                     setStep(InstallationStep.DSU_ALREADY_RUNNING_DYN_OS);
-                } else if (service.isInstalled()) {
+                } else if (!multiGsi && service.isInstalled()) {
+                    // With Multi-GSI an installed DSU is not in the way, the new GSI gets its own slot
                     setStep(InstallationStep.DSU_ALREADY_INSTALLED);
                 }
             });
@@ -472,6 +504,14 @@ public final class HomeViewModel extends AndroidViewModel {
     }
 
     public void onConfirmInstallationSheet() {
+        onConfirmInstallationSheet("");
+    }
+
+    /** @param gsiName the name typed for the GSI, only used by Multi-GSI. May be empty. */
+    public void onConfirmInstallationSheet(String gsiName) {
+        session.getUserSelection().setGsiName(GsiNames.sanitizeLabel(gsiName));
+        // A new installation gets a new slot, a retry of this one keeps it
+        installSlot = "";
         dismissSheet();
         setStep(InstallationStep.PROCESSING);
         final InstallationJob job = new InstallationJob();
@@ -546,12 +586,43 @@ public final class HomeViewModel extends AndroidViewModel {
         setStep(InstallationStep.REQUIRES_ADB_CMD_TO_CONTINUE);
     }
 
+    /** Picks the slot of the installation, once per confirmed installation. Blocks, so not for the main thread. */
+    private String resolveInstallSlot(boolean multiGsi) {
+        if (!multiGsi) {
+            return GsiNames.DEFAULT_SLOT;
+        }
+        String slot = installSlot;
+        if (slot.isEmpty()) {
+            List<String> existing = Collections.emptyList();
+            try {
+                existing = PrivilegedProvider.getService().getInstalledSlots();
+            } catch (RemoteException | RuntimeException e) {
+                Log.w(TAG, "Unable to list the installed slots, picking an id anyway.", e);
+            }
+            slot = GsiNames.newSlotId(System.currentTimeMillis() / 1000L, existing);
+            installSlot = slot;
+        }
+        return slot;
+    }
+
+    private String resolveGsiLabel(String slot) {
+        String typed = session.getUserSelection().getGsiName();
+        String label = typed.isEmpty() ? getDefaultGsiName() : typed;
+        return label.isEmpty() ? slot : label;
+    }
+
     private void startDsuInstallation() {
+        final boolean multiGsi = isMultiGsiActive();
+        final String slot = resolveInstallSlot(multiGsi);
+        Log.d(TAG, "Built-in installation, slot: " + slot + ", multiGsi: " + multiGsi);
+
         new DsuInstaller(
                 getApplication(),
                 session.getUserSelection().getUserSelectedUserdata(),
                 session.getDsuInstallation(),
                 installationJob,
+                slot,
+                multiGsi,
                 new DsuInstaller.Callbacks() {
                     @Override
                     public void onInstallationError(InstallationStep error, String errorInfo) {
@@ -578,6 +649,13 @@ public final class HomeViewModel extends AndroidViewModel {
 
                     @Override
                     public void onInstallationSuccess() {
+                        if (multiGsi) {
+                            slotRegistry.put(new GsiSlotInfo(
+                                    slot,
+                                    resolveGsiLabel(slot),
+                                    session.getUserSelection().getSelectedFileName(),
+                                    System.currentTimeMillis()));
+                        }
                         setStep(InstallationStep.INSTALL_SUCCESS_REBOOT_DYN_OS);
                     }
                 }).invoke();
@@ -676,18 +754,49 @@ public final class HomeViewModel extends AndroidViewModel {
         resetInstallationCard();
     }
 
+    // With Multi-GSI the slot that was just installed is the one to boot or to discard
+    private boolean targetsInstalledSlot() {
+        return isMultiGsiActive() && !installSlot.isEmpty();
+    }
+
     public void onClickRebootToDynOs() {
         setStep(InstallationStep.PROCESSING);
+        final boolean slotTarget = targetsInstalledSlot();
+        final String slot = installSlot;
         PrivilegedProvider.run(service -> {
-            service.setEnable(true, true);
+            if (slotTarget) {
+                if (!service.activateSlot(slot, true)) {
+                    postMessage(R.string.multi_gsi_switch_failed);
+                    setStep(InstallationStep.INSTALL_SUCCESS_REBOOT_DYN_OS);
+                    return;
+                }
+            } else {
+                service.setEnable(true, true);
+            }
             Shell.cmd("reboot").exec();
         });
     }
 
+    // Removes the slot of this installation only, or the installed DSU when Multi-GSI is off
+    private void discardTarget(com.ditzzy.dsunext.IPrivilegedService service, boolean slotTarget, String slot)
+            throws RemoteException {
+        if (slotTarget) {
+            if (service.removeSlot(slot)) {
+                slotRegistry.remove(slot);
+            } else {
+                postMessage(R.string.multi_gsi_remove_failed);
+            }
+        } else {
+            service.remove();
+        }
+    }
+
     public void onClickDiscardGsiAndStartInstallation() {
         setStep(InstallationStep.PROCESSING);
+        final boolean slotTarget = targetsInstalledSlot();
+        final String slot = installSlot;
         PrivilegedProvider.run(service -> {
-            service.remove();
+            discardTarget(service, slotTarget, slot);
             service.forceStopPackage(DSU_PACKAGE);
             startDsuInstallation();
         });
@@ -695,8 +804,10 @@ public final class HomeViewModel extends AndroidViewModel {
 
     public void onClickDiscardGsi() {
         setStep(InstallationStep.PROCESSING);
+        final boolean slotTarget = targetsInstalledSlot();
+        final String slot = installSlot;
         PrivilegedProvider.run(service -> {
-            service.remove();
+            discardTarget(service, slotTarget, slot);
             service.forceStopPackage(DSU_PACKAGE);
             resetInstallationCard();
         });
