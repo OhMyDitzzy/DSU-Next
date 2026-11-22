@@ -13,10 +13,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:minHeight="72dp"
+        android:minHeight="56dp"
         android:orientation="horizontal"
-        android:paddingHorizontal="24dp"
-        android:paddingVertical="14dp">
+        android:paddingHorizontal="20dp"
+        android:paddingVertical="8dp">
 
         <LinearLayout
             android:layout_width="0dp"
@@ -34,8 +34,7 @@
                 android:id="@+id/option_supporting"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textAppearance="?attr/textAppearanceBodySmall"
                 android:visibility="gone" />
         </LinearLayout>
 
@@ -43,7 +42,7 @@
             android:id="@+id/option_check"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:layout_marginStart="16dp"
+            android:layout_marginStart="12dp"
             android:importantForAccessibility="no"
             android:src="@drawable/ic_check"
             android:visibility="invisible"

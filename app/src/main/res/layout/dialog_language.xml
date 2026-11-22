@@ -15,7 +15,7 @@
             android:id="@+id/language_description"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="12dp"
             android:gravity="center_horizontal"
             android:text="@string/language_dialog_description"
             android:textAppearance="?attr/textAppearanceBodyMedium"
