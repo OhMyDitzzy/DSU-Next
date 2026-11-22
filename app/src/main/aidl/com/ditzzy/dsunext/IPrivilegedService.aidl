@@ -45,4 +45,6 @@ interface IPrivilegedService {
     String getActiveSlot() = 4017;
     boolean activateSlot(String slot, boolean oneShot) = 4018;
     boolean removeSlot(String slot) = 4019;
+    // Empty when the slot API works, otherwise why it does not (shown on the Multi-GSI screen)
+    String getSlotApiStatus() = 4020;
 }

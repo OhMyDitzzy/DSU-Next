@@ -73,21 +73,27 @@ public final class MultiGsiViewModel extends AndroidViewModel {
             return;
         }
         PrivilegedProvider.run(service -> {
-            if (!service.isSlotApiAvailable()) {
-                state.postValue(MultiGsiState.of(MultiGsiState.Status.UNAVAILABLE));
-                return;
-            }
-            boolean inUse = service.isInUse();
-            List<String> slots = service.getInstalledSlots();
-            String active = service.getActiveSlot();
+            try {
+                if (!service.isSlotApiAvailable()) {
+                    state.postValue(MultiGsiState.unavailable(service.getSlotApiStatus()));
+                    return;
+                }
+                boolean inUse = service.isInUse();
+                List<String> slots = service.getInstalledSlots();
+                String active = service.getActiveSlot();
 
-            registry.retainOnly(slots);
-            List<MultiGsiState.Item> items = new ArrayList<>();
-            for (String slot : slots) {
-                items.add(MultiGsiState.item(describe(slot), slot.equals(active)));
+                registry.retainOnly(slots);
+                List<MultiGsiState.Item> items = new ArrayList<>();
+                for (String slot : slots) {
+                    items.add(MultiGsiState.item(describe(slot), slot.equals(active)));
+                }
+                state.postValue(MultiGsiState.ready(inUse, items));
+            } catch (Exception e) {
+                // A call the service does not know (an older process still running) lands here too
+                Log.e(TAG, "Unable to read the installed GSIs.", e);
+                state.postValue(MultiGsiState.unavailable(e.toString()));
             }
-            state.postValue(MultiGsiState.ready(inUse, items));
-        }, () -> state.postValue(MultiGsiState.of(MultiGsiState.Status.UNAVAILABLE)));
+        }, () -> state.postValue(MultiGsiState.unavailable("The privileged service did not connect.")));
     }
 
     // A slot that gsid has but the registry lacks (installed by another tool) is still listed

@@ -209,7 +209,7 @@ public class SettingsActivity extends AppCompatActivity {
                 appPrefs.setBoolean(AppPrefs.MULTI_GSI, false);
                 return;
             }
-            confirm(R.drawable.ic_warning, R.string.experimental_feature, R.string.multi_gsi_enable_description,
+            confirm(R.drawable.ic_warning, R.string.multi_gsi_experimental_title, R.string.multi_gsi_enable_description,
                     () -> {
                         // The slot is chosen by the built-in installer, so it comes along
                         appPrefs.setBoolean(AppPrefs.USE_BUILTIN_INSTALLER, true);

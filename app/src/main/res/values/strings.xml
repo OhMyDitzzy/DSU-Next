@@ -359,6 +359,7 @@
     <string name="multi_gsi_default_label">Default GSI</string>
     <string name="multi_gsi_unsupported">Multi-GSI needs root and Android 11 or newer.</string>
     <string name="multi_gsi_unavailable">Couldn\'t reach the DSU service to read the installed GSIs. Make sure root access is granted, then reopen this screen.</string>
+    <string name="multi_gsi_details">Details: %1$s</string>
     <string name="multi_gsi_in_use">A DSU is running right now. Reboot into your normal system to switch or remove a GSI.</string>
     <string name="multi_gsi_disabled_hint">Multi-GSI is off, so a new installation still replaces the installed DSU. Turn it on in Settings > Installation.</string>
     <string name="multi_gsi_switch">Switch to this GSI</string>
@@ -378,5 +379,6 @@
     <string name="gsi_name">GSI name</string>
     <string name="multi_gsi_setting_description">Install each GSI in its own slot and keep the others</string>
     <string name="multi_gsi_requires_builtin">Requires root and Android 11 or newer</string>
-    <string name="multi_gsi_enable_description">Multi-GSI uses the built-in installer, which turns on with it. Installations go to separate slots, and each one takes its own storage for system and userdata. This is under testing and may be unstable, are you sure?</string>
+    <string name="multi_gsi_experimental_title">Multi-GSI is experimental</string>
+    <string name="multi_gsi_enable_description">Multi-GSI works together with the built-in installer, which is experimental too, so turning it on also turns the built-in installer on.\n\nIt may be unstable: switching or removing a GSI can fail, and a failed installation can leave a half installed GSI that takes up storage. Each GSI also uses its own storage for system and userdata.\n\nMake sure you can restore your device before you continue. Turn on Multi-GSI?</string>
 </resources>

@@ -1,6 +1,7 @@
 package com.ditzzy.dsunext.service;
 
 import android.os.IBinder;
+import android.os.SystemProperties;
 import android.util.Log;
 
 import org.lsposed.hiddenapibypass.HiddenApiBypass;
@@ -24,19 +25,81 @@ final class GsiSlotController {
     private static final String TAG = "GsiSlotController";
     private static final String GSI_SERVICE = "gsiservice";
     private static final String GSI_STUB = "android.gsi.IGsiService$Stub";
+    private static final String GSID_STATE_PROP = "init.svc.gsid";
+    private static final long GSID_TIMEOUT_MS = 8_000L;
+    private static final long GSID_SHELL_START_AFTER_MS = 2_000L;
+    private static final long GSID_POLL_MS = 100L;
 
     private Object gsi;
+    private IBinder gsiBinder;
+    private volatile String lastError = "";
 
     private synchronized Object gsi() throws ReflectiveOperationException {
+        // gsid can exit and come back, a proxy of the old process would only throw
+        if (gsi != null && gsiBinder != null && !gsiBinder.isBinderAlive()) {
+            gsi = null;
+            gsiBinder = null;
+        }
         if (gsi == null) {
-            IBinder binder = PrivilegedService.getBinder(GSI_SERVICE);
-            if (binder == null) {
-                throw new IllegalStateException("gsiservice is not available.");
-            }
+            IBinder binder = awaitGsiBinder();
             Class<?> stub = Class.forName(GSI_STUB);
             gsi = HiddenApiBypass.invoke(stub, null, "asInterface", binder);
+            gsiBinder = binder;
         }
         return gsi;
+    }
+
+    private static String gsidState() {
+        try {
+            Object state = HiddenApiBypass.invoke(
+                    Class.forName("android.os.SystemProperties"), null, "get", GSID_STATE_PROP);
+            return state == null ? "" : state.toString();
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    /**
+     * gsid is not running all the time: init starts it on demand, and "gsiservice" only exists while
+     * it runs. The DynamicSystem service does the same before it talks to gsid, so it is started
+     * here when needed, then the service is awaited.
+     */
+    private static IBinder awaitGsiBinder() {
+        if (!"running".equals(gsidState())) {
+            try {
+                SystemProperties.set("ctl.start", "gsid");
+            } catch (RuntimeException e) {
+                Log.w(TAG, "Unable to start gsid through ctl.start.", e);
+            }
+        }
+
+        boolean shellTried = false;
+        for (long waited = 0L; waited < GSID_TIMEOUT_MS; waited += GSID_POLL_MS) {
+            IBinder binder = PrivilegedService.getBinder(GSI_SERVICE);
+            if (binder != null) {
+                return binder;
+            }
+            if (!shellTried && waited >= GSID_SHELL_START_AFTER_MS && !"running".equals(gsidState())) {
+                shellTried = true;
+                startGsidWithShell();
+            }
+            try {
+                Thread.sleep(GSID_POLL_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        throw new IllegalStateException("gsiservice did not show up, init.svc.gsid is '" + gsidState() + "'.");
+    }
+
+    // The property route needs the right to set ctl.start, the command does not depend on that
+    private static void startGsidWithShell() {
+        try {
+            new ProcessBuilder("/system/bin/start", "gsid").redirectErrorStream(true).start().waitFor();
+        } catch (Exception e) {
+            Log.w(TAG, "Unable to start gsid with the start command.", e);
+        }
     }
 
     private Object call(String method, Object... args) throws ReflectiveOperationException {
@@ -48,11 +111,27 @@ final class GsiSlotController {
     boolean isAvailable() {
         try {
             call("getInstalledDsuSlots");
+            lastError = "";
             return true;
         } catch (Exception e) {
+            lastError = describe(e);
             Log.w(TAG, "The slot API is not available.", e);
             return false;
         }
+    }
+
+    /** Empty when the last availability check passed, otherwise the root cause of the failure. */
+    String status() {
+        return lastError;
+    }
+
+    private static String describe(Throwable error) {
+        Throwable root = error;
+        while (root.getCause() != null && root.getCause() != root) {
+            root = root.getCause();
+        }
+        String message = root.getMessage();
+        return root.getClass().getSimpleName() + (message == null ? "" : ": " + message);
     }
 
     List<String> installedSlots() {

@@ -84,6 +84,9 @@ public class MultiGsiActivity extends AppCompatActivity {
                 break;
             case UNAVAILABLE:
                 notice = getString(R.string.multi_gsi_unavailable);
+                if (!state.detail.isEmpty()) {
+                    notice += "\n\n" + getString(R.string.multi_gsi_details, state.detail);
+                }
                 break;
             case READY:
                 if (state.inUse) {

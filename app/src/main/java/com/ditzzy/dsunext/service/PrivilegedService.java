@@ -377,4 +377,12 @@ public final class PrivilegedService extends IPrivilegedService.Stub {
     public boolean removeSlot(String slot) {
         return slotController.remove(slot);
     }
+
+    @Override
+    public String getSlotApiStatus() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            return "Android " + Build.VERSION.RELEASE + " is older than Android 11";
+        }
+        return slotController.status();
+    }
 }
