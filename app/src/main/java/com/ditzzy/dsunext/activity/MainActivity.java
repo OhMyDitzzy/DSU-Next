@@ -168,6 +168,7 @@ public class MainActivity extends AppCompatActivity implements Shizuku.OnRequest
     protected void onResume() {
         super.onResume();
         viewModel.refreshPreferences();
+        viewModel.verifyInstalledState();
         // Multi-GSI may have been switched in the settings, the card and sections depend on it
         cardRenderer.render(currentInstallation);
         renderVisibility();

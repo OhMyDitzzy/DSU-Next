@@ -248,6 +248,46 @@ public final class HomeViewModel extends AndroidViewModel {
     }
 
     /**
+     * A finished installation (or a DSU found at startup) stays on the card until something
+     * changes it. The GSI can be removed elsewhere meanwhile (eg: the Multi-GSI screen), so on
+     * return the card is checked against what is really installed and dropped when it is gone.
+     */
+    public void verifyInstalledState() {
+        final InstallationStep step;
+        synchronized (stateLock) {
+            step = installation.step;
+        }
+        if (!session.isRoot()
+                || (step != InstallationStep.INSTALL_SUCCESS_REBOOT_DYN_OS
+                && step != InstallationStep.DSU_ALREADY_INSTALLED)) {
+            return;
+        }
+        final String slot = installSlot;
+        final boolean slotTarget = isMultiGsiActive() && !slot.isEmpty();
+        PrivilegedProvider.run(service -> {
+            boolean present;
+            try {
+                List<String> slots = service.getInstalledSlots();
+                present = slotTarget ? slots.contains(slot) : !slots.isEmpty() || service.isInstalled();
+            } catch (RemoteException | RuntimeException e) {
+                // Slots are unknown on this device, ask about the DSU itself
+                present = service.isInstalled();
+            }
+            if (present) {
+                return;
+            }
+            boolean stale;
+            synchronized (stateLock) {
+                stale = installation.step == step;
+            }
+            if (stale) {
+                Log.d(TAG, "The installed GSI is gone, clearing the installation card.");
+                resetInstallationCard();
+            }
+        });
+    }
+
+    /**
      * Must run once the operation mode is known, and again whenever it changes
      * (eg: when Shizuku shows up after startup).
      */
