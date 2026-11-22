@@ -167,6 +167,9 @@ public class MainActivity extends AppCompatActivity implements Shizuku.OnRequest
     protected void onResume() {
         super.onResume();
         viewModel.refreshPreferences();
+        // Multi-GSI may have been switched in the settings, the card and sections depend on it
+        cardRenderer.render(currentInstallation);
+        renderVisibility();
     }
 
     private void registerLaunchers() {
@@ -318,17 +321,22 @@ public class MainActivity extends AppCompatActivity implements Shizuku.OnRequest
     }
 
     private void renderVisibility() {
-       boolean installing = currentInstallation.isInstalling();
-       boolean showSelection = checksPassed && !installing;
-       binding.installationSection.setVisibility(showSelection ? View.VISIBLE : View.GONE);
-       binding.toolsSection.setVisibility(installing ? View.GONE : View.VISIBLE);
-       binding.progressCard.setVisibility(installing ? View.VISIBLE : View.GONE);
+        boolean busy = currentInstallation.isBusy();
+        boolean settled = currentInstallation.isSettled();
+        boolean multiGsi = viewModel.isMultiGsiActive();
 
-       if (showSelection && currentInstallation.installable) {
-          binding.fabInstall.show();
-       } else {
-          binding.fabInstall.hide();
-       }
+        // Once an installation is done, Multi-GSI keeps the form so another GSI can be added.
+        // Without Multi-GSI the form is replaced by the "installation is present" card.
+        boolean showSelection = checksPassed && (!currentInstallation.isInstalling() || (settled && multiGsi));
+        binding.installationSection.setVisibility(showSelection ? View.VISIBLE : View.GONE);
+        binding.toolsSection.setVisibility(busy ? View.GONE : View.VISIBLE);
+        binding.progressCard.setVisibility(currentInstallation.isInstalling() ? View.VISIBLE : View.GONE);
+
+        if (showSelection && currentInstallation.installable) {
+            binding.fabInstall.show();
+        } else {
+            binding.fabInstall.hide();
+        }
     }
 
     private void renderFileRow(InstallationCardState state) {

@@ -33,4 +33,25 @@ public final class InstallationCardState {
     public boolean isInstalling() {
         return step != InstallationStep.NOT_INSTALLING;
     }
+
+    /**
+     * The installation is over (or an installed DSU was found) and nothing is running. The card
+     * still has a message and buttons, but the rest of the home screen stays usable.
+     */
+    public boolean isSettled() {
+        switch (step) {
+            case INSTALL_SUCCESS:
+            case INSTALL_SUCCESS_REBOOT_DYN_OS:
+            case DSU_ALREADY_INSTALLED:
+            case DSU_ALREADY_RUNNING_DYN_OS:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /** An installation or one of its error screens is taking over the home screen. */
+    public boolean isBusy() {
+        return isInstalling() && !isSettled();
+    }
 }

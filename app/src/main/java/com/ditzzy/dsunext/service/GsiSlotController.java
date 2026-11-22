@@ -6,6 +6,7 @@ import android.util.Log;
 
 import org.lsposed.hiddenapibypass.HiddenApiBypass;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +26,8 @@ final class GsiSlotController {
     private static final String TAG = "GsiSlotController";
     private static final String GSI_SERVICE = "gsiservice";
     private static final String GSI_STUB = "android.gsi.IGsiService$Stub";
+    private static final String GSI_DATA_DIR = "/data/gsi/dsu";
+    private static final String GSI_METADATA_DIR = "/metadata/gsi/dsu";
     private static final String GSID_STATE_PROP = "init.svc.gsid";
     private static final long GSID_TIMEOUT_MS = 8_000L;
     private static final long GSID_SHELL_START_AFTER_MS = 2_000L;
@@ -199,27 +202,76 @@ final class GsiSlotController {
         try {
             List<String> slots = installedSlots();
             if (!slots.contains(slot)) {
+                // gsid does not know it, but its files can still be around (a removal that stopped halfway)
+                wipeSlotFiles(slot);
                 return true;
             }
             String previousActive = activeSlot();
             boolean previousEnabled = isGsiEnabled();
 
+            boolean removed;
             if (!slot.equals(previousActive) && !isOk(call("enableGsi", false, slot))) {
                 // A half installed slot can refuse to be activated. With no other slot around,
                 // the plain removal cannot hit anything else, so it is safe to use.
                 if (slots.size() == 1) {
-                    return removeActive();
+                    removed = removeActive();
+                } else {
+                    Log.e(TAG, "Unable to select slot for removal: " + slot);
+                    removed = false;
                 }
-                Log.e(TAG, "Unable to select slot for removal: " + slot);
-                return false;
+            } else {
+                removed = removeActive();
+                if (!removed || installedSlots().contains(slot)) {
+                    // gsid sometimes reports success, or fails, and leaves the slot behind. Once more.
+                    removed = removeActive();
+                }
+                restore(previousActive, previousEnabled, slot);
             }
 
-            boolean removed = removeActive();
-            restore(previousActive, previousEnabled, slot);
-            return removed;
+            // gsid is the one that should delete the slot. Whatever it left behind is wiped here,
+            // so no folder with images stays in /data/gsi/dsu after a removal.
+            boolean gone = !installedSlots().contains(slot);
+            if (gone || removed) {
+                wipeSlotFiles(slot);
+            }
+            return gone || removed;
         } catch (Exception e) {
             Log.e(TAG, "Unable to remove slot: " + slot, e);
             return false;
+        }
+    }
+
+    /** Deletes the image folder of a slot and its gsid metadata, when gsid left them behind. */
+    private static void wipeSlotFiles(String slot) {
+        // The slot ends up in a path, only the characters of a slot id are accepted
+        if (slot == null || !slot.matches("[A-Za-z0-9_]+")) {
+            return;
+        }
+        deleteRecursively(new File(GSI_DATA_DIR, slot));
+
+        File[] metadata = new File(GSI_METADATA_DIR).listFiles();
+        if (metadata != null) {
+            for (File file : metadata) {
+                String name = file.getName();
+                if (name.equals(slot) || name.startsWith(slot + ".")) {
+                    deleteRecursively(file);
+                }
+            }
+        }
+    }
+
+    private static void deleteRecursively(File file) {
+        if (!file.exists()) {
+            return;
+        }
+        File[] children = file.isDirectory() ? file.listFiles() : null;
+        if (children != null) {
+            for (File child : children) {
+                deleteRecursively(child);
+            }
+        }
+        if (!file.delete() && file.exists()) {
+            Log.w(TAG, "Unable to delete " + file);
         }
     }
 
