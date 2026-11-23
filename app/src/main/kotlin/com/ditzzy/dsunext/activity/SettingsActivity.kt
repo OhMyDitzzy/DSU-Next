@@ -1,5 +1,6 @@
 package com.ditzzy.dsunext.activity
 
+import java.util.function.Consumer
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -88,7 +89,7 @@ open class SettingsActivity : AppCompatActivity() {
         })
         val dynamicSupported: Boolean = ThemeManager.isDynamicColorSupported()
         val dynamicRow: ListRow = ListRow.create(binding!!.groupAppearance).icon(R.drawable.ic_auto_awesome).title(R.string.dynamic_color).supporting((if (dynamicSupported) R.string.dynamic_color_description else R.string.dynamic_color_unsupported)).enabled(dynamicSupported)
-        dynamicRow.toggle(themeManager!!.isDynamicColorEnabled(), Consumer { enabled ->
+        dynamicRow.toggle(themeManager!!.isDynamicColorEnabled(), Consumer<Boolean> { enabled ->
             themeManager!!.setDynamicColorEnabled(enabled)
             updateColorState()
         })
@@ -170,7 +171,7 @@ open class SettingsActivity : AppCompatActivity() {
         val builtin: ListRow = ListRow.create(binding!!.groupInstallation).icon(R.drawable.ic_bolt).title(R.string.builtin_installer).supporting((if (builtinSupported) (if (session!!.isRoot()) R.string.builtin_installer_description else R.string.requires_root) else R.string.builtin_installer_unsupported)).enabled(builtinAvailable)
         val builtinOn: Boolean = (builtinAvailable && appPrefs!!.getBoolean(AppPrefs.USE_BUILTIN_INSTALLER))
         builtinRow = builtin
-        builtin.toggle(builtinOn, Consumer callback10@ { enabled ->
+        builtin.toggle(builtinOn, Consumer<Boolean> callback10@ { enabled ->
             if (!enabled) {
                 appPrefs!!.setBoolean(AppPrefs.USE_BUILTIN_INSTALLER, false)
                 appPrefs!!.setBoolean(AppPrefs.MULTI_GSI, false)
@@ -188,7 +189,7 @@ open class SettingsActivity : AppCompatActivity() {
         val multiSupported: Boolean = MultiGsi.isSupported(session!!)
         val multi: ListRow = ListRow.create(binding!!.groupInstallation).icon(R.drawable.ic_storage).title(R.string.multi_gsi).supporting((if (multiSupported) R.string.multi_gsi_setting_description else R.string.multi_gsi_requires_builtin)).enabled(multiSupported)
         multiGsiRow = multi
-        multi.toggle((multiSupported && MultiGsi.isActive(appPrefs!!, session!!)), Consumer callback13@ { enabled ->
+        multi.toggle((multiSupported && MultiGsi.isActive(appPrefs!!, session!!)), Consumer<Boolean> callback13@ { enabled ->
             if (!enabled) {
                 appPrefs!!.setBoolean(AppPrefs.MULTI_GSI, false)
                 return@callback13
@@ -208,7 +209,7 @@ open class SettingsActivity : AppCompatActivity() {
 
     private fun buildDeveloperGroup() {
         val storageCheck: ListRow = ListRow.create(binding!!.groupDeveloper).icon(R.drawable.ic_storage).title(R.string.storage_check_title).supporting(R.string.storage_check_description)
-        storageCheck.toggle(appPrefs!!.getBoolean(AppPrefs.DISABLE_STORAGE_CHECK), Consumer callback16@ { disabled ->
+        storageCheck.toggle(appPrefs!!.getBoolean(AppPrefs.DISABLE_STORAGE_CHECK), Consumer<Boolean> callback16@ { disabled ->
             if (!disabled) {
                 appPrefs!!.setBoolean(AppPrefs.DISABLE_STORAGE_CHECK, false)
                 return@callback16
@@ -238,7 +239,7 @@ open class SettingsActivity : AppCompatActivity() {
         if ((supporting != 0)) {
             row.supporting(supporting)
         }
-        row.toggle(appPrefs!!.getBoolean(key), Consumer { enabled ->
+        row.toggle(appPrefs!!.getBoolean(key), Consumer<Boolean> { enabled ->
             appPrefs!!.setBoolean(key, enabled)
         })
         return row

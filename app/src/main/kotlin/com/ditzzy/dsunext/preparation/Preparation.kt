@@ -65,7 +65,6 @@ class Preparation {
             "xz", "gz", "gzip" -> {
                 val extracted: PreparedFile = extractFile(userSelectedFileUri, "system")
                 source = DsuInstallationSource.singleSystemImage(extracted.getUri(), extracted.getSize())
-                break
             }
             "zip" -> {
                 source = DsuInstallationSource.dsuPackage(userSelectedFileUri)

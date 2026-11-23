@@ -143,12 +143,12 @@ class GsiMetadata {
             while ((parent.lastIndexOf('/') > 0)) {
                 parent = parent.substring(0, parent.lastIndexOf('/'))
                 if (labels.containsKey(parent)) {
-                    labels.put(key, labels.`get`(parent))
+                    labels.put(key, labels.`get`(parent)!!)
                     return
                 }
             }
             if (labels.containsKey("/")) {
-                labels.put(key, labels.`get`("/"))
+                labels.put(key, labels.`get`("/")!!)
             }
         }
     }

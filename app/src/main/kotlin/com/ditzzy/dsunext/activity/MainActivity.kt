@@ -105,7 +105,7 @@ open class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResult
 
     private var pickFile: ActivityResultLauncher<Array<String>>? = null
 
-    private var pickFolder: ActivityResultLauncher<Uri>? = null
+    private var pickFolder: ActivityResultLauncher<Uri?>? = null
 
     private var createLogFile: ActivityResultLauncher<String>? = null
 
@@ -113,10 +113,10 @@ open class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResult
 
     private val userServiceArgs: Shizuku.UserServiceArgs = Shizuku.UserServiceArgs(ComponentName(BuildConfig.APPLICATION_ID, PrivilegedService::class.java.getName())).daemon(false).processNameSuffix("service").debuggable(BuildConfig.DEBUG).version(BuildConfig.VERSION_CODE)
 
-    private val binderReceivedListener: Shizuku.OnBinderReceivedListener = callback1@ {
+    private val binderReceivedListener: Shizuku.OnBinderReceivedListener = Shizuku.OnBinderReceivedListener {
         if (!OperationModeUtils.isShizukuPermissionGranted(this)) {
             askShizukuPermission()
-            return@callback1
+            return@OnBinderReceivedListener
         }
         bindShizuku()
     }
@@ -178,7 +178,7 @@ open class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResult
             }
         })
         agreement = registerForActivityResult(ActivityResultContracts.StartActivityForResult(), { result ->
-            if ((result.getResultCode() == RESULT_OK)) {
+            if ((result.resultCode == RESULT_OK)) {
                 viewModel!!.initialChecks()
             } else {
                 finishAffinity()
@@ -541,7 +541,7 @@ open class MainActivity : AppCompatActivity(), Shizuku.OnRequestPermissionResult
     }
 
     private fun setupSessionOperationMode() {
-        val mode: OperationMode = OperationModeUtils.getOperationMode(getApplication<Application>(), shouldCheckShizuku)
+        val mode: OperationMode = OperationModeUtils.getOperationMode(application, shouldCheckShizuku)
         session!!.setOperationMode(mode)
         session!!.setOperationModeResolved(true)
         Log.d(TAG, ("Operation mode is: " + mode))

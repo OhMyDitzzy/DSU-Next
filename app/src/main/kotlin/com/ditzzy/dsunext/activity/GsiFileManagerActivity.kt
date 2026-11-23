@@ -59,7 +59,7 @@ class GsiFileManagerActivity : AppCompatActivity() {
 
     private var saveFile: ActivityResultLauncher<String>? = null
 
-    protected override fun onCreate(state: Bundle) {
+    override fun onCreate(state: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(state)
         workspace = getIntent().getStringExtra(EXTRA_WORKSPACE)
@@ -355,7 +355,7 @@ class GsiFileManagerActivity : AppCompatActivity() {
         showSheet(content)
     }
 
-    private fun add(titles: List<String>, actions: List<Runnable>, title: Int, action: Runnable) {
+    private fun add(titles: MutableList<String>, actions: MutableList<Runnable>, title: Int, action: Runnable) {
         titles.add(getString(title))
         actions.add(action)
     }
