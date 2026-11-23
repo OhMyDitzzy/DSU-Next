@@ -40,7 +40,7 @@ Small, focused pull requests are easiest to review. If a change touches several 
 
 | Module | Language | What it holds |
 | --- | --- | --- |
-| `app` | Java | The application: screens, installer, privileged service, Multi-GSI, Edit GSI. |
+| `app` | Kotlin | The application: screens, installer, privileged service, Multi-GSI, Edit GSI. |
 | `file-manager` | Kotlin | File operations inside a GSI workspace (copy, move, permissions, symlinks). |
 | `treble` | Kotlin | The Treble checker. |
 | `yuki` | Kotlin + Rust | JNI bridge and the Rust core that reads and writes ext4 and EROFS images. |
@@ -81,7 +81,7 @@ The tests under `androidTest` need a device or an emulator.
 
 Beyond that, follow what the surrounding code does:
 
-- `app` is Java and the library modules are Kotlin. Stay with the language of the module you are changing.
+- Application and library code use Kotlin. The compile-only Android framework stubs stay in Java to preserve their platform signatures.
 - **No text in code or layouts.** Every string the user can see goes into `res/values/` and is translated (see below). Use numbered placeholders such as `%1$s` so translators can reorder words.
 - The interface is Material 3 Expressive. Use theme attributes (`?attr/colorSurfaceContainerHigh`, `?attr/textAppearanceTitleMedium`) instead of fixed colors, and check both light and dark themes with dynamic color on and off. Settings screens are built from `ListRow` and `SegmentedGroup`.
 - Never block the main thread with I/O or shell commands.
@@ -104,7 +104,7 @@ Edit `app/src/main/res/values-<code>/strings.xml` and `file_manager_strings.xml`
 4. Give each `<plurals>` the quantity forms your language needs. See the [CLDR plural rules](https://cldr.unicode.org/index/cldr-spec/plural-rules).
 5. Add the language to the picker:
    - Add `<locale android:name="<tag>" />` to `res/xml/locales_config.xml`, using the BCP 47 tag (`fr`, `id`, `pt-BR`).
-   - Add a constant to `model/AppLanguage.java` with a **new, never reused id**. The id is stored in the user's preferences.
+   - Add a constant to `model/AppLanguage.kt` with a **new, never reused id**. The id is stored in the user's preferences.
    - Add `language_<name>` (the language written in itself, `translatable="false"`) and `language_<name>_name` (the language written in each interface language) to `res/values/strings.xml`, and `language_<name>_name` to every translation.
 6. Run `./gradlew testDebugUnitTest` and open **Settings > Appearance > Language** on a device to check the result.
 

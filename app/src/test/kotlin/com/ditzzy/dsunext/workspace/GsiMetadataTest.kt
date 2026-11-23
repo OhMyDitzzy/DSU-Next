@@ -1,0 +1,172 @@
+package com.ditzzy.dsunext.workspace
+
+import com.ditzzy.dsunext.filemanager.api.ChangeKind
+import com.ditzzy.dsunext.filemanager.api.FileChange
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TemporaryFolder
+import java.io.File
+import java.io.IOException
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
+import org.junit.Assert.*
+
+open class GsiMetadataTest {
+    @JvmField
+    var temporary: TemporaryFolder = TemporaryFolder()
+
+    private var workspace: File? = null
+
+    private var root: Path? = null
+
+    private var config: Path? = null
+
+    @Throws(Exception::class)
+    @Before
+    open fun setUp() {
+        workspace = temporary.newFolder("workspace")
+        root = Files.createDirectory(File(workspace, "system").toPath())
+        config = Files.createDirectory(File(workspace, "config").toPath())
+        write("info", "mount_point=/\n")
+        write("fs_config", "/ 0 0 0755\nold 0 0 0755\nold/data 1000 2000 0640 capabilities=0x1\nold/link 0 0 0777\n")
+        write("file_contexts", "/ u:object_r:rootfs:s0\n/old u:object_r:system_file:s0\n/old/data u:object_r:system_file:s0\n/old/link u:object_r:system_file:s0\n")
+        write("symlinks", "old/link /system/bin/sh\n")
+        Files.createDirectory(root!!.resolve("old"))
+        Files.write(root!!.resolve("old/data"), byteArrayOf(1.toByte()))
+    }
+
+    @Throws(Exception::class)
+    @Test
+    open fun directoryRenamePreservesOwnersCapabilitiesLabelsAndLinks() {
+        val metadata: GsiMetadata = GsiMetadata(workspace!!, "system")
+        metadata.begin()
+        Files.move(root!!.resolve("old"), root!!.resolve("new"))
+        metadata.apply(FileChange(ChangeKind.MOVED, "new", "old"))
+        metadata.save()
+        assertTrue(read("fs_config").contains("new/data 1000 2000 0640 capabilities=0x1"))
+        assertFalse(read("fs_config").contains("old/data"))
+        assertTrue(read("file_contexts").contains("/new/data u:object_r:system_file:s0"))
+        assertEquals("new/link /system/bin/sh\n", read("symlinks"))
+    }
+
+    @Throws(Exception::class)
+    @Test
+    open fun deletingALinkRemovesItsSidecarEntry() {
+        val metadata: GsiMetadata = GsiMetadata(workspace!!, "system")
+        metadata.begin()
+        metadata.apply(FileChange(ChangeKind.DELETED, "old/link", null))
+        metadata.save()
+        assertEquals("", read("symlinks"))
+        assertFalse(read("fs_config").contains("old/link"))
+    }
+
+    @Throws(Exception::class)
+    @Test
+    open fun aNewSymlinkGetsTheStockMode() {
+        val metadata: GsiMetadata = GsiMetadata(workspace!!, "system")
+        metadata.begin()
+        java.nio.file.Files.createSymbolicLink(root!!.resolve("fresh-link"), java.nio.file.Paths.`get`("/system/bin/sh"))
+        metadata.apply(FileChange(ChangeKind.CREATED, "fresh-link", null))
+        metadata.save()
+        assertTrue(read("fs_config").contains("fresh-link 0 0 0644"))
+        assertEquals(GsiMetadata.SYMLINK_MODE, metadata.mode("fresh-link", false, true))
+    }
+
+    @Throws(Exception::class)
+    @Test
+    open fun partialCopyOnlyRecordsEntriesThatActuallyCompleted() {
+        val metadata: GsiMetadata = GsiMetadata(workspace!!, "system")
+        metadata.begin()
+        Files.createDirectory(root!!.resolve("copy"))
+        metadata.apply(FileChange(ChangeKind.COPIED, "copy", "old"))
+        Files.copy(root!!.resolve("old/data"), root!!.resolve("copy/data"))
+        metadata.apply(FileChange(ChangeKind.COPIED, "copy/data", "old/data"))
+        metadata.save()
+        assertTrue(read("fs_config").contains("copy/data 1000 2000 0640 capabilities=0x1"))
+        assertFalse(read("symlinks").contains("copy/link"))
+        assertTrue(read("fs_config").contains("old/data"))
+    }
+
+    @Throws(Exception::class)
+    @Test
+    open fun copyThenDeleteMoveKeepsTheMetadataAlreadyCopied() {
+        val metadata: GsiMetadata = GsiMetadata(workspace!!, "system")
+        metadata.begin()
+        Files.createDirectory(root!!.resolve("copy"))
+        Files.copy(root!!.resolve("old/data"), root!!.resolve("copy/data"))
+        metadata.apply(FileChange(ChangeKind.COPIED, "copy", "old"))
+        metadata.apply(FileChange(ChangeKind.COPIED, "copy/data", "old/data"))
+        metadata.apply(FileChange(ChangeKind.DELETED, "old/data", null))
+        metadata.apply(FileChange(ChangeKind.DELETED, "old", null))
+        metadata.apply(FileChange(ChangeKind.MOVED, "copy", "old"))
+        metadata.save()
+        assertTrue(read("fs_config").contains("copy/data 1000 2000 0640 capabilities=0x1"))
+        assertFalse(read("fs_config").contains("old/data"))
+    }
+
+    @Throws(Exception::class)
+    @Test
+    open fun permissionEditsLeaveWorkingFilesAccessible() {
+        val `data`: Path = root!!.resolve("old/data")
+        val before: Any = Files.getAttribute(`data`, "unix:mode")
+        val metadata: GsiMetadata = GsiMetadata(workspace!!, "system")
+        metadata.begin()
+        metadata.setMode("old/data", 0)
+        metadata.save()
+        assertEquals(before, Files.getAttribute(`data`, "unix:mode"))
+        assertEquals(0, GsiMetadata(workspace!!, "system").mode("old/data", false, false))
+    }
+
+    @Throws(Exception::class)
+    @Test
+    open fun interruptedCommitBlocksRepackButLeavesMetadataReadable() {
+        val metadata: GsiMetadata = GsiMetadata(workspace!!, "system")
+        metadata.begin()
+        GsiMetadata(workspace!!, "system")
+        try {
+            GsiMetadata.checkHealthy(workspace!!)
+            fail("An incomplete metadata commit must block repack")
+        } catch (expected: IOException) {
+            assertTrue(expected.message!!.contains("recovery"))
+        }
+        metadata.save()
+        GsiMetadata.checkHealthy(workspace!!)
+    }
+
+    @Throws(Exception::class)
+    @Test
+    open fun aSystemMountPointMapsRelativePathsCorrectly() {
+        write("info", "mount_point=/system\n")
+        write("fs_config", "system 0 0 0755\nsystem/old/data 1000 2000 0640\n")
+        write("file_contexts", "/system u:object_r:system_file:s0\n")
+        write("symlinks", "")
+        val metadata: GsiMetadata = GsiMetadata(workspace!!, "system")
+        metadata.begin()
+        metadata.setMode("old/data", 384)
+        metadata.save()
+        assertTrue(read("fs_config").contains("system/old/data 1000 2000 0600"))
+        assertFalse(read("fs_config").contains("system/system/"))
+    }
+
+    @Throws(Exception::class)
+    @Test
+    open fun escapedLabelsRoundTripWithoutChangingTheirPaths() {
+        write("file_contexts", "/ u:object_r:rootfs:s0\n/old/libc\\+\\+\\.so u:object_r:system_file:s0\n")
+        val metadata: GsiMetadata = GsiMetadata(workspace!!, "system")
+        metadata.begin()
+        metadata.save()
+        assertTrue(read("file_contexts").contains("/old/libc\\+\\+\\.so u:object_r:system_file:s0"))
+    }
+
+    @Throws(IOException::class)
+    private fun write(suffix: String, text: String) {
+        Files.write(config!!.resolve(("system_" + suffix)), text.toByteArray(StandardCharsets.UTF_8))
+    }
+
+    @Throws(IOException::class)
+    private fun read(suffix: String): String {
+        return String(Files.readAllBytes(config!!.resolve(("system_" + suffix))), StandardCharsets.UTF_8)
+    }
+}
