@@ -28,6 +28,7 @@ public final class SlotRegistry {
     private static final String TAG = "SlotRegistry";
     private static final String FILE = "multi_gsi_slots";
     private static final String KEY_SLOTS = "slots";
+    private static final String KEY_SELECTED = "selected";
 
     private static final String F_LABEL = "label";
     private static final String F_SOURCE = "source";
@@ -91,8 +92,24 @@ public final class SlotRegistry {
         }
     }
 
+    /**
+     * The slot the user last chose to boot, empty when none. gsid's own "active slot" is not a
+     * reliable answer for a one-shot switch, so the choice is remembered here and shown instead.
+     */
+    public synchronized String getSelected() {
+        String selected = preferences.getString(KEY_SELECTED, "");
+        return selected == null ? "" : selected;
+    }
+
+    public synchronized void setSelected(String slot) {
+        preferences.edit().putString(KEY_SELECTED, slot == null ? "" : slot).apply();
+    }
+
     /** Forgets every slot that gsid no longer has. */
     public synchronized void retainOnly(Collection<String> installedSlots) {
+        if (!getSelected().isEmpty() && !installedSlots.contains(getSelected())) {
+            setSelected("");
+        }
         JSONObject all = read();
         List<String> stale = new ArrayList<>();
         Iterator<String> keys = all.keys();

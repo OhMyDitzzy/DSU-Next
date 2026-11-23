@@ -816,6 +816,7 @@ public final class HomeViewModel extends AndroidViewModel {
                     sheet.postValue(SheetDisplay.INSTALL_FINISHED);
                     return;
                 }
+                slotRegistry.setSelected(slot);
             } else {
                 service.setEnable(true, true);
             }

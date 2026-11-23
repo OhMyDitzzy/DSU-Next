@@ -80,9 +80,13 @@ public final class MultiGsiViewModel extends AndroidViewModel {
                 }
                 boolean inUse = service.isInUse();
                 List<String> slots = service.getInstalledSlots();
-                String active = service.getActiveSlot();
+                String gsidActive = service.getActiveSlot();
 
                 registry.retainOnly(slots);
+                // The slot picked here wins: gsid can keep reporting the previous one after a
+                // one-shot switch, which left the check mark on the wrong GSI
+                String selected = registry.getSelected();
+                String active = !selected.isEmpty() && slots.contains(selected) ? selected : gsidActive;
                 List<MultiGsiState.Item> items = new ArrayList<>();
                 for (String slot : slots) {
                     items.add(MultiGsiState.item(describe(slot), slot.equals(active)));
@@ -121,8 +125,10 @@ public final class MultiGsiViewModel extends AndroidViewModel {
             if (!service.activateSlot(slot, true)) {
                 postMessage(R.string.multi_gsi_switch_failed);
             } else if (reboot) {
+                registry.setSelected(slot);
                 Shell.cmd("reboot").exec();
             } else {
+                registry.setSelected(slot);
                 postMessage(R.string.multi_gsi_switch_done);
             }
             busy.postValue(false);
@@ -138,6 +144,9 @@ public final class MultiGsiViewModel extends AndroidViewModel {
         PrivilegedProvider.run(service -> {
             if (service.removeSlot(slot)) {
                 registry.remove(slot);
+                if (slot.equals(registry.getSelected())) {
+                    registry.setSelected("");
+                }
                 postMessage(R.string.multi_gsi_removed);
             } else {
                 postMessage(R.string.multi_gsi_remove_failed);
