@@ -17,7 +17,7 @@ import com.ditzzy.dsunext.ui.Event
 import com.ditzzy.dsunext.ui.UiMessage
 import com.ditzzy.dsunext.util.GsiNames
 import com.ditzzy.dsunext.util.MultiGsi
-import com.topjohnwu.superuser.Shell
+import com.ditzzy.dsunext.util.SlotQueries
 import java.util.ArrayList
 
 /** Lists the installed GSIs and switches, renames or removes them. */
@@ -75,9 +75,16 @@ class MultiGsiViewModel : AndroidViewModel {
                     return@callback3
                 }
                 val inUse: Boolean = service.isInUse()
-                val slots: List<String> = service.getInstalledSlots()
                 val gsidActive: String = service.getActiveSlot()
-                registry.retainOnly(slots)
+                // An installation by the DSU app finishes in its own process, this is where it is noticed
+                // when nothing watched the log. Installing makes the new slot the active one.
+                registry.promotePending(gsidActive, false)
+                val authoritative: Boolean = service.isSlotListAuthoritative()
+                val slots: List<String> = SlotQueries.list(service, registry)
+                // Without the real list (Shizuku) a slot can't be told apart from a stale entry, so nothing is pruned
+                if (authoritative) {
+                    registry.retainOnly(slots)
+                }
                 val selected: String = registry.getSelected()
                 val active: String = (if ((!selected.isEmpty() && slots.contains(selected))) selected else gsidActive)
                 val items: MutableList<MultiGsiState.Item> = ArrayList<MultiGsiState.Item>()
@@ -117,7 +124,9 @@ class MultiGsiViewModel : AndroidViewModel {
                 postMessage(R.string.multi_gsi_switch_failed)
             } else if (reboot) {
                 registry.setSelected(slot)
-                Shell.cmd("reboot").exec()
+                if (!service.rebootDevice()) {
+                    postMessage(R.string.multi_gsi_reboot_failed)
+                }
             } else {
                 registry.setSelected(slot)
                 postMessage(R.string.multi_gsi_switch_done)

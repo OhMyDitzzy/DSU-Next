@@ -20,8 +20,16 @@ import java.util.concurrent.TimeUnit
 class DsuInstallationHandler {
     private val session: Session
 
-    constructor(session: Session) {
+    /** The DSU slot to install into. Empty keeps the DSU app's own default slot ("dsu"). */
+    private val dsuSlot: String
+
+    constructor(session: Session) : this(session, "") {
+
+    }
+
+    constructor(session: Session, dsuSlot: String) {
         this.session = session
+        this.dsuSlot = dsuSlot
     }
 
     /** May block while talking to the service, so it must be called from a background thread. */
@@ -47,6 +55,10 @@ class DsuInstallationHandler {
             dynIntent.setData(fileUri)
             dynIntent.putExtra("KEY_USERDATA_SIZE", userdataSize)
             dynIntent.putExtra("KEY_SYSTEM_SIZE", length)
+            if (!dsuSlot.isEmpty()) {
+                // VerificationActivity hands every extra to the installation service, which reads this one
+                dynIntent.putExtra(KEY_DSU_SLOT, dsuSlot)
+            }
             Log.d(TAG, ("Starting DSU VerificationActivity: " + dynIntent))
             service.startActivity(dynIntent)
         })
@@ -83,6 +95,8 @@ class DsuInstallationHandler {
         private const val TAG: String = "DsuInstallationHandler"
 
         private const val DSU_PACKAGE: String = "com.android.dynsystem"
+
+        const val KEY_DSU_SLOT: String = "KEY_DSU_SLOT"
 
         private const val REMOUNT_DELAY_SECONDS: Long = 30L
 

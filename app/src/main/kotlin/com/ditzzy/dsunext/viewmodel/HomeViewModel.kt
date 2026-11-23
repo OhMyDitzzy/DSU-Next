@@ -39,6 +39,7 @@ import com.ditzzy.dsunext.util.FilenameUtils
 import com.ditzzy.dsunext.util.GsiNames
 import com.ditzzy.dsunext.util.InstallationJob
 import com.ditzzy.dsunext.util.MultiGsi
+import com.ditzzy.dsunext.util.SlotQueries
 import com.ditzzy.dsunext.util.OperationModeUtils
 import com.ditzzy.dsunext.util.StorageUtils
 import com.topjohnwu.superuser.Shell
@@ -265,7 +266,7 @@ class HomeViewModel : AndroidViewModel {
         synchronized(stateLock) {
             step = installation.step
         }
-        if ((!session.isRoot() || ((step != InstallationStep.INSTALL_SUCCESS_REBOOT_DYN_OS) && (step != InstallationStep.DSU_ALREADY_INSTALLED)))) {
+        if ((!MultiGsi.hasPrivilegedAccess(session) || ((step != InstallationStep.INSTALL_SUCCESS_REBOOT_DYN_OS) && (step != InstallationStep.DSU_ALREADY_INSTALLED)))) {
             return
         }
         val slot: String = installSlot
@@ -273,7 +274,7 @@ class HomeViewModel : AndroidViewModel {
         PrivilegedProvider.run(ServiceAction callback4@ { service ->
             var present: Boolean = false
             try {
-                val slots: List<String> = service.getInstalledSlots()
+                val slots: List<String> = SlotQueries.list(service, slotRegistry)
                 present = (if (slotTarget) slots.contains(slot) else (!slots.isEmpty() || service.isInstalled()))
             } catch (e: RemoteException) {
                 present = service.isInstalled()
@@ -300,9 +301,11 @@ class HomeViewModel : AndroidViewModel {
      */
     fun onOperationModeChanged() {
         initialChecks()
-        // Checking for an existing DSU needs MANAGE_DYNAMIC_SYSTEM, so it's root only
-        if ((session.isRoot() && !isInstalling())) {
-            val multiGsi: Boolean = isMultiGsiActive()
+        // Checking for an existing DSU needs MANAGE_DYNAMIC_SYSTEM, so it's root only, except for
+        // Multi-GSI: it has no use for the "already installed" card, and a running DSU is a question
+        // the privileged service answers to shell too.
+        val multiGsi: Boolean = isMultiGsiActive()
+        if (((session.isRoot() || multiGsi) && !isInstalling())) {
             PrivilegedProvider.run(ServiceAction { service ->
                 if (service.isInUse()) {
                     setStep(InstallationStep.DSU_ALREADY_RUNNING_DYN_OS)
@@ -632,7 +635,7 @@ class HomeViewModel : AndroidViewModel {
         if (slot.isEmpty()) {
             var existing: List<String> = Collections.emptyList()
             try {
-                existing = PrivilegedProvider.getService().getInstalledSlots()
+                existing = SlotQueries.list(PrivilegedProvider.getService(), slotRegistry)
             } catch (e: RemoteException) {
                 Log.w(TAG, "Unable to list the installed slots, picking an id anyway.", e)
             } catch (e: RuntimeException) {
@@ -689,12 +692,41 @@ class HomeViewModel : AndroidViewModel {
     @Throws(RemoteException::class)
     private fun startPrivilegedInstallation() {
         setStep(InstallationStep.WAITING_USER_CONFIRMATION)
-        DsuInstallationHandler(session).startInstallation()
+        // The DSU app installs into the slot it is given, so Multi-GSI works without the built-in installer
+        val multiGsi: Boolean = isMultiGsiActive()
+        var slot: String = ""
+        if (multiGsi) {
+            slot = resolveInstallSlot(true)
+            // Only a real GSI once the installation is done, see finalizeInstalledSlot()
+            slotRegistry.setPending(GsiSlotInfo(slot, resolveGsiLabel(slot), session.getUserSelection().getSelectedFileName(), System.currentTimeMillis()))
+        }
+        Log.d(TAG, (((("DSU app installation, slot: " + (if (slot.isEmpty()) "(default)" else slot)) + ", multiGsi: ") + multiGsi)))
+        DsuInstallationHandler(session, slot).startInstallation()
         if ((session.isRoot() || OperationModeUtils.isReadLogsPermissionGranted(getApplication<Application>()))) {
             startLogging()
         } else {
             setStep(InstallationStep.INSTALL_SUCCESS)
         }
+    }
+
+    /**
+     * The DSU app finished a Multi-GSI installation: register the GSI under the slot gsid now has as
+     * active (installing makes the new slot the active one). If that is not the slot that was asked
+     * for, this DSU app ignored KEY_DSU_SLOT and installed to its default slot, and the user is told.
+     */
+    private fun finalizeInstalledSlot() {
+        if (!isMultiGsiActive()) {
+            return
+        }
+        val requested: String = installSlot
+        PrivilegedProvider.run(ServiceAction { service ->
+            val registered: String = slotRegistry.promotePending(service.getActiveSlot(), true)
+            if ((!registered.isEmpty() && !requested.isEmpty() && !registered.equals(requested))) {
+                Log.w(TAG, (((("Asked for slot " + requested) + " but the DSU app installed to ") + registered) + "."))
+                installSlot = registered
+                postMessage(R.string.multi_gsi_slot_ignored)
+            }
+        })
     }
 
     // Tracks and diagnoses the installation by reading logcat
@@ -715,6 +747,7 @@ class HomeViewModel : AndroidViewModel {
 
                 override fun onInstallationSuccess() {
                     setStep(InstallationStep.INSTALL_SUCCESS)
+                    finalizeInstalledSlot()
                 }
 
                 override fun onLogLineReceived() {
@@ -758,6 +791,7 @@ class HomeViewModel : AndroidViewModel {
             })
         }
         installationJob.cancel()
+        slotRegistry.clearPending()
         session.setDsuInstallation(DsuInstallationSource.none())
         resetInstallationCard()
     }

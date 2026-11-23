@@ -370,8 +370,8 @@
     <string name="multi_gsi_active">Active</string>
     <string name="multi_gsi_slot_id">Slot %1$s</string>
     <string name="multi_gsi_default_label">Default GSI</string>
-    <string name="multi_gsi_unsupported">Multi-GSI needs root and Android 11 or newer.</string>
-    <string name="multi_gsi_unavailable">Couldn\'t reach the DSU service to read the installed GSIs. Make sure root access is granted, then reopen this screen.</string>
+    <string name="multi_gsi_unsupported">Multi-GSI needs root or Shizuku, and Android 11 or newer.</string>
+    <string name="multi_gsi_unavailable">Couldn\'t reach the DSU service to read the installed GSIs. Make sure root or Shizuku access is granted, then reopen this screen.</string>
     <string name="multi_gsi_details">Details: %1$s</string>
     <string name="multi_gsi_in_use">A DSU is running right now. Reboot into your normal system to switch or remove a GSI.</string>
     <string name="multi_gsi_disabled_hint">Multi-GSI is off, so a new installation still replaces the installed DSU. Turn it on in Settings > Installation.</string>
@@ -389,9 +389,11 @@
     <string name="multi_gsi_remove_message">The GSI and everything stored in it will be DELETED. Your other GSIs are not touched.</string>
     <string name="multi_gsi_removed">GSI removed.</string>
     <string name="multi_gsi_remove_failed">Couldn\'t remove that GSI.</string>
+    <string name="multi_gsi_slot_ignored">This ROM\'s DSU app ignored the slot name and installed to its default slot. An older GSI in that slot may have been replaced.</string>
+    <string name="multi_gsi_reboot_failed">Couldn\'t restart the device. Restart it yourself to boot the GSI.</string>
     <string name="gsi_name">GSI name</string>
     <string name="multi_gsi_setting_description">Install each GSI in its own slot and keep the others</string>
-    <string name="multi_gsi_requires_builtin">Requires root and Android 11 or newer</string>
+    <string name="multi_gsi_requires_builtin">Requires root or Shizuku, and Android 11 or newer</string>
     <string name="multi_gsi_experimental_title">Multi-GSI is experimental</string>
-    <string name="multi_gsi_enable_description">Multi-GSI works together with the built-in installer, which is experimental too, so turning it on also turns the built-in installer on.\n\nIt may be unstable: switching or removing a GSI can fail, and a failed installation can leave a half installed GSI that takes up storage. Each GSI also uses its own storage for system and userdata.\n\nMake sure you can restore your device before you continue. Turn on Multi-GSI?</string>
+    <string name="multi_gsi_enable_description">Multi-GSI installs each GSI in its own DSU slot. It works with root, and with Shizuku (no root needed).\n\nWithout root the DSU app of your ROM does the installation and must accept a slot name. If it does not, the GSI goes to the default slot and can replace the one that is there. Without root the list of GSIs is also kept by DSU Next itself, so a GSI removed by another tool can stay in the list until you remove it here.\n\nIt may be unstable: switching or removing a GSI can fail, and a failed installation can leave a half installed GSI that takes up storage. Each GSI also uses its own storage for system and userdata.\n\nMake sure you can restore your device before you continue. Turn on Multi-GSI?</string>
 </resources>

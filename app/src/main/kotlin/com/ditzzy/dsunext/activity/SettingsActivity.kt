@@ -173,11 +173,8 @@ open class SettingsActivity : AppCompatActivity() {
         builtinRow = builtin
         builtin.toggle(builtinOn, Consumer<Boolean> callback10@ { enabled ->
             if (!enabled) {
+                // Multi-GSI no longer depends on the built-in installer, it is left as it is
                 appPrefs!!.setBoolean(AppPrefs.USE_BUILTIN_INSTALLER, false)
-                appPrefs!!.setBoolean(AppPrefs.MULTI_GSI, false)
-                if ((multiGsiRow != null)) {
-                    multiGsiRow!!.checked(false)
-                }
                 return@callback10
             }
             confirm(R.drawable.ic_warning, R.string.experimental_feature, R.string.experimental_feature_description, Runnable {
@@ -195,9 +192,7 @@ open class SettingsActivity : AppCompatActivity() {
                 return@callback13
             }
             confirm(R.drawable.ic_warning, R.string.multi_gsi_experimental_title, R.string.multi_gsi_enable_description, Runnable {
-                appPrefs!!.setBoolean(AppPrefs.USE_BUILTIN_INSTALLER, true)
                 appPrefs!!.setBoolean(AppPrefs.MULTI_GSI, true)
-                builtinRow!!.checked(true)
             }, Runnable {
                 multi.checked(false)
             })

@@ -21,6 +21,9 @@ class InstallationCmdline {
         if ((parameters.getImageSize() != DsuConstants.DEFAULT_IMAGE_SIZE)) {
             arguments.append(argument("--el", "KEY_SYSTEM_SIZE", parameters.getImageSize()))
         }
+        if (!parameters.getDsuSlot().isEmpty()) {
+            arguments.append(argument("--es", "KEY_DSU_SLOT", parameters.getDsuSlot()))
+        }
         return arguments.toString().trim()
     }
 
