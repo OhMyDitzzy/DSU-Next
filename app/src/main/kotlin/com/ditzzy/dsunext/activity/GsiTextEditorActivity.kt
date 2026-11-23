@@ -325,11 +325,11 @@ class GsiTextEditorActivity : AppCompatActivity() {
         }).setNeutralButton(R.string.cancel, null).show()
     }
 
-    protected override fun onSaveInstanceState(state: Bundle) {
-        state.putBoolean("close_after_save", closeAfterSave)
-        state.putBoolean("search_open", (binding!!.searchBar.getVisibility() == View.VISIBLE))
-        state.putInt("editor_scroll", binding!!.editor.getScrollY())
-        super.onSaveInstanceState(state)
+    protected override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean("close_after_save", closeAfterSave)
+        outState.putBoolean("search_open", (binding!!.searchBar.getVisibility() == View.VISIBLE))
+        outState.putInt("editor_scroll", binding!!.editor.getScrollY())
+        super.onSaveInstanceState(outState)
     }
 
     protected override fun onDestroy() {

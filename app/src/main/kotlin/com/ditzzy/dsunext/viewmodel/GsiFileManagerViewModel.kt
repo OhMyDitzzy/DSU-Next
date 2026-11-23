@@ -36,7 +36,7 @@ class GsiFileManagerViewModel : AndroidViewModel {
 
     private val busy: MutableLiveData<Boolean> = MutableLiveData<Boolean>(false)
 
-    private val progress: MutableLiveData<OperationProgress> = MutableLiveData<OperationProgress>()
+    private val progress: MutableLiveData<OperationProgress?> = MutableLiveData<OperationProgress?>()
 
     private val outcomes: MutableLiveData<Event<Outcome>> = MutableLiveData<Event<Outcome>>()
 
@@ -80,7 +80,7 @@ class GsiFileManagerViewModel : AndroidViewModel {
         return busy
     }
 
-    fun getProgress(): LiveData<OperationProgress> {
+    fun getProgress(): LiveData<OperationProgress?> {
         return progress
     }
 

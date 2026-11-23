@@ -114,7 +114,7 @@ class EditGsiViewModel : AndroidViewModel {
 
     private val workspaces: MutableLiveData<List<Workspace>> = MutableLiveData<List<Workspace>>(Collections.emptyList())
 
-    private val operation: MutableLiveData<Operation> = MutableLiveData<Operation>()
+    private val operation: MutableLiveData<Operation?> = MutableLiveData<Operation?>()
 
     private val messages: MutableLiveData<Event<UiMessage>> = MutableLiveData<Event<UiMessage>>()
 
@@ -157,8 +157,8 @@ class EditGsiViewModel : AndroidViewModel {
             operation.postValue(next)
         }
 
-        override fun onFinished(resultJson: String) {
-            onJobFinished(resultJson)
+        override fun onFinished(result: String) {
+            onJobFinished(result)
         }
 
         override fun onError(message: String) {
@@ -183,7 +183,7 @@ class EditGsiViewModel : AndroidViewModel {
         return workspaces
     }
 
-    fun getOperation(): LiveData<Operation> {
+    fun getOperation(): LiveData<Operation?> {
         return operation
     }
 

@@ -26,7 +26,7 @@ class OutputExporter {
         fun run(name: String, fileName: String?, target: ParcelFileDescriptor, reporter: JobReporter): String {
             ParcelFileDescriptor.AutoCloseOutputStream(target).use { `out` ->
                 val workspace: File = WorkspaceStore.existing(name)
-                if (!OUTPUT_FILE.matcher(fileName).matches()) {
+                if (fileName == null || !OUTPUT_FILE.matcher(fileName).matches()) {
                     throw IOException(("Invalid file name: " + fileName))
                 }
                 val file: File = File(File(workspace, WorkspaceStore.OUTPUT_DIR), fileName)

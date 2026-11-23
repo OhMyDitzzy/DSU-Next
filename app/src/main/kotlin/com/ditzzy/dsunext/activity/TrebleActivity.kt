@@ -80,25 +80,12 @@ open class TrebleActivity : AppCompatActivity() {
         if ((result == null)) {
             return getString(R.string.treble_unknown)
         }
-        when (result!!.cpuArch) {
-            ABI.ARM32 -> {
-                return getString(R.string.treble_arch_arm32)
-            }
-            ABI.ARM32_BINDER64 -> {
-                return getString(R.string.treble_arch_arm32_binder64)
-            }
-            ABI.ARM64 -> {
-                return getString(R.string.treble_arch_arm64)
-            }
-            ABI.X86 -> {
-                return getString(R.string.treble_arch_x86)
-            }
-            ABI.X86_64 -> {
-                return getString(R.string.treble_arch_x86_64)
-            }
-            else -> {
-                return getString(R.string.treble_unknown)
-            }
+        return when (result!!.cpuArch) {
+            ABI.ARM32 -> getString(R.string.treble_arch_arm32)
+            ABI.ARM32_BINDER64 -> getString(R.string.treble_arch_arm32_binder64)
+            ABI.ARM64 -> getString(R.string.treble_arch_arm64)
+            ABI.X86 -> getString(R.string.treble_arch_x86)
+            ABI.X86_64 -> getString(R.string.treble_arch_x86_64)
         }
     }
 

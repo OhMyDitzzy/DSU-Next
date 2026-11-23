@@ -134,9 +134,9 @@ class LogcatDiagnostic {
                     if ((!progressMatcher.find() || !partitionMatcher.find())) {
                         throw IllegalStateException("Progress not found")
                     }
-                    val progressText: Array<String> = java.util.regex.Pattern.compile("/").split(progressMatcher.group(2))
+                    val progressText: Array<String> = java.util.regex.Pattern.compile("/").split(progressMatcher.group(2)!!)
                     val progress: Float = (java.lang.Float.parseFloat(progressText[0]) / java.lang.Float.parseFloat(progressText[1]))
-                    callbacks.onInstallationProgressUpdate(progress, partitionMatcher.group(2))
+                    callbacks.onInstallationProgressUpdate(progress, partitionMatcher.group(2)!!)
                 } catch (e: RuntimeException) {
                     callbacks.onStepUpdate(InstallationStep.PROCESSING_LOG_READABLE)
                 }
