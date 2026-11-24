@@ -27,7 +27,7 @@ DSU Next is a derivative of [DSU Sideloader](https://github.com/VegaBobo/DSU-Sid
 
 - **Install a GSI as a DSU** from `.img`, `.gz`, `.xz` or a DSU package `.zip`.
 - **Built-in installer** (root) that talks to the DynamicSystem API directly.
-- **[Multi-GSI](docs/multi-gsi.md)** (root or Shizuku): keep several GSIs installed, each in its own DSU slot with its own userdata, and switch between them or remove one without touching the others.
+- **[Multi-GSI](docs/multi-gsi.md)** (root): keep several GSIs installed, each in its own DSU slot with its own userdata, and switch between them or remove one without touching the others.
 - **Installation progress and diagnostics** read from logcat, with a plain explanation and a suggested fix for the common failures.
 - **[Edit GSI](docs/edit-gsi.md)** without root: import an image or an archive into private app storage, edit files with the built-in file manager, then repack to ext4 or EROFS and save the result.
 - **Treble check**: Treble support and type, VNDK version, CPU architecture, partition scheme and system-as-root.
@@ -41,7 +41,7 @@ DSU Next is a derivative of [DSU Sideloader](https://github.com/VegaBobo/DSU-Sid
 4. Select a GSI, set the userdata size, and tap **Install**.
 5. Follow the prompts for your operation mode. Without root or Shizuku the app gives you a command to run over `adb`.
 
-To keep more than one GSI, turn on **Multi-GSI** in **Settings > Installation** (root or Shizuku) and see [Multi-GSI](docs/multi-gsi.md).
+To keep more than one GSI, turn on **Multi-GSI** in **Settings > Installation** (root only) and see [Multi-GSI](docs/multi-gsi.md).
 
 ## Contributing
 

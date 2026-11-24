@@ -8,22 +8,10 @@ class InstallationParameters {
 
     private val imageSize: Long
 
-    /** The DSU slot to install into, empty for the DSU app's default. */
-    private val dsuSlot: String
-
-    constructor(userdataSize: Long, absoluteFilePath: String, imageSize: Long) : this(userdataSize, absoluteFilePath, imageSize, "") {
-
-    }
-
-    constructor(userdataSize: Long, absoluteFilePath: String, imageSize: Long, dsuSlot: String) {
+    constructor(userdataSize: Long, absoluteFilePath: String, imageSize: Long) {
         this.userdataSize = userdataSize
         this.absoluteFilePath = absoluteFilePath
         this.imageSize = imageSize
-        this.dsuSlot = dsuSlot
-    }
-
-    fun getDsuSlot(): String {
-        return dsuSlot
     }
 
     fun getUserdataSize(): Long {

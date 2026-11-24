@@ -225,24 +225,12 @@ class PrivilegedService : IPrivilegedService.Stub {
         return dynamicSystem().suggestScratchSize()
     }
 
-    // As shell (Shizuku) the dynamic_system service refuses to answer, gsid answers the same two
-    // questions to shell, and they mean the same thing: "is a DSU running" and "is a GSI installed".
     override fun isInUse(): Boolean {
-        if (isShell()) {
-            return slotController.isRunning()
-        }
         return dynamicSystem().isInUse()
     }
 
     override fun isInstalled(): Boolean {
-        if (isShell()) {
-            return slotController.isInstalled()
-        }
         return dynamicSystem().isInstalled()
-    }
-
-    private fun isShell(): Boolean {
-        return (android.os.Process.myUid() == SHELL_UID)
     }
 
     override fun isSlotApiAvailable(): Boolean {
@@ -265,30 +253,6 @@ class PrivilegedService : IPrivilegedService.Stub {
         return slotController.remove(slot)
     }
 
-    override fun isSlotListAuthoritative(): Boolean {
-        return slotController.isListAuthoritative()
-    }
-
-    // svc needs the REBOOT permission, which both root and shell have
-    override fun rebootDevice(): Boolean {
-        val commands: Array<Array<String>> = arrayOf(arrayOf("/system/bin/svc", "power", "reboot"), arrayOf("/system/bin/reboot"))
-        for (command in commands) {
-            try {
-                val result: ShellResult = runShell(*command)
-                if ((result.exitCode == 0)) {
-                    return true
-                }
-                Log.w(TAG, (((("Reboot command failed (" + command[0]) + "), exit code ") + result.exitCode) + ": ") + result.output)
-            } catch (e: IOException) {
-                Log.w(TAG, ("Unable to run " + command[0]), e)
-            } catch (e: InterruptedException) {
-                Thread.currentThread().interrupt()
-                return false
-            }
-        }
-        return false
-    }
-
     override fun getSlotApiStatus(): String {
         if ((Build.VERSION.SDK_INT < Build.VERSION_CODES.R)) {
             return (("Android " + Build.VERSION.RELEASE) + " is older than Android 11")
@@ -300,8 +264,6 @@ class PrivilegedService : IPrivilegedService.Stub {
         private const val TAG: String = "PrivilegedService"
 
         private const val PER_USER_RANGE: Int = 100000
-
-        private const val SHELL_UID: Int = 2000
 
         private const val SHELL_TIMEOUT_SECONDS: Long = 15L
 

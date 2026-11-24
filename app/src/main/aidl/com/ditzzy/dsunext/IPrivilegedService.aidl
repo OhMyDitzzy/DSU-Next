@@ -47,12 +47,4 @@ interface IPrivilegedService {
     boolean removeSlot(String slot) = 4019;
     // Empty when the slot API works, otherwise why it does not (shown on the Multi-GSI screen)
     String getSlotApiStatus() = 4020;
-
-    // True when getInstalledSlots() is the full truth: gsid lists the slots (root or system) or the
-    // gsid metadata folder is readable. False when running as shell (Shizuku), where gsid refuses to
-    // list slots and the caller has to rely on what it remembers plus getActiveSlot().
-    boolean isSlotListAuthoritative() = 4021;
-
-    // Restarts the device. Works as root and as shell, so Shizuku does not need libsu for it.
-    boolean rebootDevice() = 4022;
 }

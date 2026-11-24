@@ -10,17 +10,12 @@ userdata, so installing a new one no longer means discarding the one you have.
 
 ## Requirements
 
-- Root **or** Shizuku.
+- Root access.
 - Android 11 or newer.
+- The built-in installer. Turning on Multi-GSI turns it on as well.
 
-The built-in installer is not needed. Over plain adb (no root, no Shizuku) DSU Next only
-prepares a command and Multi-GSI stays off.
-
-| | Root | Shizuku |
-| --- | --- | --- |
-| Install into a slot | built-in installer, or the DSU app | the DSU app |
-| Switch, remove | yes | yes |
-| List of GSIs | read from gsid | kept by DSU Next, see [Without root](#without-root-shizuku) |
+Without root, or with Shizuku or adb, DSU Next installs a single GSI as before.
+Choosing a slot is only possible through the built-in installer.
 
 ## Turn it on
 
@@ -57,26 +52,6 @@ normal system, open the list again and switch.
 
 Switching and removing do not work while a DSU is running. The list says so.
 
-## Without root (Shizuku)
-
-Shizuku runs DSU Next's service as `shell`. That is enough for everything except one call:
-
-- **Installing** goes through the DSU app of your ROM (`com.android.dynsystem`). DSU Next
-  passes the slot in the `KEY_DSU_SLOT` extra, which the app hands to its installation
-  service. The ROM's DSU app has to support it. If it ignores the extra, the GSI is installed
-  to the default slot `dsu` and can replace a GSI that is already there. DSU Next notices this
-  after the installation and tells you.
-- **Switching and removing** are gsid calls (`enableGsi`, `removeGsi`) that gsid accepts from
-  `shell`.
-- **Listing** is the exception: gsid lists slots for root and system only. Under Shizuku DSU
-  Next shows the GSIs it installed itself, plus the slot gsid has as active. A GSI that another
-  tool removed stays in the list until you remove it here, and a GSI that another tool installed
-  only shows up while it is the active slot.
-- **Reading the install state** (is a DSU running, is a GSI installed) is asked to gsid instead
-  of the DynamicSystem service, which needs a permission that shell does not have.
-- Without the log permission DSU Next cannot see the installation finish. The GSI is then
-  registered the next time you open the Multi-GSI list.
-
 ## How it works
 
 gsid, the service behind DSU, stores every installation in a named slot. DSU Next
@@ -93,10 +68,8 @@ which one the device boots.
 
 | Message | Cause | What to try |
 | --- | --- | --- |
-| Multi-GSI needs root or Shizuku and Android 11 or newer | The device or the operation mode is not supported. | Grant root or Shizuku to DSU Next, then reopen the screen. |
-| Couldn't reach the DSU service | Root or Shizuku was not granted, or gsid did not answer. | Check the grant and try again. SELinux on some ROMs does not let `shell` talk to gsid, use root there. |
-| The DSU app ignored the slot name | The ROM's DSU app does not read `KEY_DSU_SLOT`. | Use root with the built-in installer on this ROM. |
+| Multi-GSI needs root and Android 11 or newer | The device or the operation mode is not supported. | Grant root to DSU Next, then reopen the screen. |
+| Couldn't reach the DSU service | Root was not granted, or gsid did not answer the slot queries. | Check the root grant and try again. Some ROMs ship a gsid that does not expose slots. |
 | A DSU is running right now | You are booted into a DSU. | Reboot into your normal system. |
 | Couldn't switch to that GSI / Couldn't remove that GSI | gsid refused the request. | Read the logcat lines tagged `GsiSlotController`, they say which gsid call failed. |
 | Multi-GSI is off | The setting is off, so a new installation replaces the installed DSU. | Turn it on in **Settings > Installation**. |
-| Couldn't restart the device | The reboot command was refused. | Restart the device yourself, the chosen GSI is already selected. |

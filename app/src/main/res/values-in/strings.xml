@@ -366,8 +366,8 @@
     <string name="multi_gsi_active">Aktif</string>
     <string name="multi_gsi_slot_id">Slot %1$s</string>
     <string name="multi_gsi_default_label">GSI bawaan</string>
-    <string name="multi_gsi_unsupported">Multi-GSI membutuhkan root atau Shizuku, dan Android 11 atau lebih baru.</string>
-    <string name="multi_gsi_unavailable">Tidak dapat menghubungi layanan DSU untuk membaca GSI yang terinstal. Pastikan akses root atau Shizuku sudah diberikan, lalu buka kembali layar ini.</string>
+    <string name="multi_gsi_unsupported">Multi-GSI membutuhkan root dan Android 11 atau lebih baru.</string>
+    <string name="multi_gsi_unavailable">Tidak dapat menghubungi layanan DSU untuk membaca GSI yang terinstal. Pastikan akses root sudah diberikan, lalu buka kembali layar ini.</string>
     <string name="multi_gsi_details">Detail: %1$s</string>
     <string name="multi_gsi_in_use">Sebuah DSU sedang berjalan. Reboot ke sistem normal Anda untuk beralih atau menghapus GSI.</string>
     <string name="multi_gsi_disabled_hint">Multi-GSI nonaktif, sehingga instalasi baru tetap menggantikan DSU yang terinstal. Aktifkan di Pengaturan > Instalasi.</string>
@@ -385,11 +385,9 @@
     <string name="multi_gsi_remove_message">GSI beserta semua isinya akan DIHAPUS. GSI Anda yang lain tidak tersentuh.</string>
     <string name="multi_gsi_removed">GSI dihapus.</string>
     <string name="multi_gsi_remove_failed">Tidak dapat menghapus GSI itu.</string>
-    <string name="multi_gsi_slot_ignored">Aplikasi DSU di ROM ini mengabaikan nama slot dan menginstal ke slot bawaannya. GSI lama di slot itu mungkin tergantikan.</string>
-    <string name="multi_gsi_reboot_failed">Tidak dapat memulai ulang perangkat. Mulai ulang sendiri untuk masuk ke GSI.</string>
     <string name="gsi_name">Nama GSI</string>
     <string name="multi_gsi_setting_description">Instal setiap GSI di slotnya sendiri dan pertahankan yang lain</string>
-    <string name="multi_gsi_requires_builtin">Membutuhkan root atau Shizuku, dan Android 11 atau lebih baru</string>
+    <string name="multi_gsi_requires_builtin">Membutuhkan root dan Android 11 atau lebih baru</string>
     <string name="multi_gsi_experimental_title">Multi-GSI masih eksperimental</string>
-    <string name="multi_gsi_enable_description">Multi-GSI menginstal setiap GSI di slot DSU-nya sendiri. Fitur ini berjalan dengan root, dan dengan Shizuku (tanpa root).\n\nTanpa root, instalasi dikerjakan oleh aplikasi DSU bawaan ROM Anda dan aplikasi itu harus menerima nama slot. Jika tidak, GSI masuk ke slot bawaan dan bisa menggantikan GSI yang sudah ada di sana. Tanpa root, daftar GSI juga dicatat oleh DSU Next sendiri, jadi GSI yang dihapus oleh alat lain bisa tetap muncul di daftar sampai Anda menghapusnya di sini.\n\nFitur ini mungkin tidak stabil: beralih atau menghapus GSI bisa gagal, dan instalasi yang gagal dapat meninggalkan GSI setengah terinstal yang memakan penyimpanan. Setiap GSI juga memakai penyimpanannya sendiri untuk system dan userdata.\n\nPastikan Anda bisa memulihkan perangkat sebelum melanjutkan. Aktifkan Multi-GSI?</string>
+    <string name="multi_gsi_enable_description">Multi-GSI bekerja bersama penginstal bawaan, yang juga masih eksperimental, jadi mengaktifkannya juga mengaktifkan penginstal bawaan.\n\nFitur ini mungkin tidak stabil: beralih atau menghapus GSI bisa gagal, dan instalasi yang gagal dapat meninggalkan GSI setengah terinstal yang memakan penyimpanan. Setiap GSI juga memakai penyimpanannya sendiri untuk system dan userdata.\n\nPastikan Anda bisa memulihkan perangkat sebelum melanjutkan. Aktifkan Multi-GSI?</string>
 </resources>

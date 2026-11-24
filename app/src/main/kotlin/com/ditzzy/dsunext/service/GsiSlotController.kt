@@ -48,13 +48,10 @@ class GsiSlotController {
         return HiddenApiBypass.invoke(service.javaClass, service, method, *args)
     }
 
-    /**
-     * True when gsid answers. Probed with getActiveDsuSlot(), which root, system and shell may all
-     * call, unlike getInstalledDsuSlots() that gsid keeps for root and system only.
-     */
+    /** True when gsid answers the slot queries, which needs Android 11 or newer. */
     fun isAvailable(): Boolean {
         try {
-            call("getActiveDsuSlot")
+            call("getInstalledDsuSlots")
             lastError = ""
             return true
         } catch (e: Exception) {
@@ -69,48 +66,10 @@ class GsiSlotController {
         return lastError
     }
 
-    /** gsid refused getInstalledDsuSlots() to this caller (shell). Remembered, the uid never changes. */
-    @Volatile
-    private var listingDenied: Boolean = false
-
-    /** The last call of [installedSlots] returned the real list of slots. */
-    @Volatile
-    private var listAuthoritative: Boolean = false
-
-    /**
-     * The installed slots, from the best source this caller may use:
-     * gsid (root, system), then the gsid metadata folder (when SELinux lets the caller read it).
-     * When neither works the list is empty and [isListAuthoritative] is false: the caller then has
-     * to rely on what it remembers.
-     */
     fun installedSlots(): List<String> {
-        val fromGsid: List<String>? = listFromGsid()
-        if ((fromGsid != null)) {
-            listAuthoritative = true
-            return fromGsid!!
-        }
-        val fromMetadata: List<String>? = listFromMetadata()
-        if ((fromMetadata != null)) {
-            listAuthoritative = true
-            return fromMetadata!!
-        }
-        listAuthoritative = false
-        return ArrayList<String>()
-    }
-
-    /** Whether [installedSlots] can be trusted to be complete. Refreshes the answer. */
-    fun isListAuthoritative(): Boolean {
-        installedSlots()
-        return listAuthoritative
-    }
-
-    private fun listFromGsid(): List<String>? {
-        if (listingDenied) {
-            return null
-        }
+        val slots: MutableList<String> = ArrayList<String>()
         try {
             val result: Any? = call("getInstalledDsuSlots")
-            val slots: MutableList<String> = ArrayList<String>()
             if ((result is List<*>)) {
                 for (item in (result as List<*>)) {
                     if (((item != null) && !item.toString().isEmpty())) {
@@ -118,99 +77,19 @@ class GsiSlotController {
                     }
                 }
             }
-            return slots
         } catch (e: Exception) {
-            if (isSecurityDenied(e)) {
-                // Expected when running as shell (Shizuku): gsid lists slots for root and system only
-                listingDenied = true
-                Log.i(TAG, "gsid does not list the slots to this caller, falling back.")
-            } else {
-                Log.e(TAG, "Unable to list the installed slots.", e)
-            }
-            return null
+            Log.e(TAG, "Unable to list the installed slots.", e)
         }
+        return slots
     }
 
-    /**
-     * Every slot folder of /metadata/gsi/dsu holds an install_dir file, which is also how gsid
-     * itself tells slots from the other files. Null when the folder is not readable, or when it has
-     * folders but none can be verified (SELinux hiding the files inside).
-     */
-    private fun listFromMetadata(): List<String>? {
-        try {
-            val entries: Array<File>? = File(GSI_METADATA_DIR).listFiles()
-            if ((entries == null)) {
-                return null
-            }
-            val candidates: MutableList<String> = ArrayList<String>()
-            val verified: MutableList<String> = ArrayList<String>()
-            for (entry in entries!!) {
-                val name: String = entry.getName()
-                if ((name.startsWith(".") || !entry.isDirectory())) {
-                    continue
-                }
-                candidates.add(name)
-                if (File(entry, INSTALL_DIR_FILE).exists()) {
-                    verified.add(name)
-                }
-            }
-            if ((verified.isEmpty() && !candidates.isEmpty())) {
-                return null
-            }
-            return verified
-        } catch (e: SecurityException) {
-            return null
-        }
-    }
-
-    /**
-     * The slot gsid boots when DSU is enabled. The active file is read first: getActiveDsuSlot()
-     * answers with the slot of the last installation for as long as gsid keeps running, which is not
-     * always the slot that is active now.
-     */
     fun activeSlot(): String {
-        val fromFile: String? = readActiveFile()
-        if ((fromFile != null && !fromFile.isEmpty())) {
-            return fromFile
-        }
         try {
             val result: Any? = call("getActiveDsuSlot")
             return (if ((result == null)) "" else result!!.toString())
         } catch (e: Exception) {
             Log.e(TAG, "Unable to read the active slot.", e)
             return ""
-        }
-    }
-
-    private fun readActiveFile(): String? {
-        try {
-            val file: File = File(GSI_ACTIVE_FILE)
-            if (!file.isFile()) {
-                return null
-            }
-            return file.readText().trim()
-        } catch (e: Exception) {
-            return null
-        }
-    }
-
-    /** Any slot is installed (gsid's install status file exists). */
-    fun isInstalled(): Boolean {
-        try {
-            return java.lang.Boolean.TRUE.equals(call("isGsiInstalled"))
-        } catch (e: Exception) {
-            Log.w(TAG, "Unable to read whether a GSI is installed.", e)
-            return false
-        }
-    }
-
-    /** A DSU is the running system right now. */
-    fun isRunning(): Boolean {
-        try {
-            return java.lang.Boolean.TRUE.equals(call("isGsiRunning"))
-        } catch (e: Exception) {
-            Log.w(TAG, "Unable to read whether a GSI is running.", e)
-            return false
         }
     }
 
@@ -226,25 +105,15 @@ class GsiSlotController {
     /**
      * Makes `slot` the one gsid boots the next time DSU is enabled.
      *
-     * <p>gsid does not check that the slot exists, it only writes the name down. So whoever calls
-     * this with a slot that cannot be verified here (the shell case) must know it is installed.
-     *
      * @param oneShot boot it once only. The device goes back to the normal system on the reboot after.
      */
     fun activate(slot: String, oneShot: Boolean): Boolean {
         try {
-            if ((isListAuthoritative() && !installedSlots().contains(slot))) {
+            if (!installedSlots().contains(slot)) {
                 Log.e(TAG, ("Slot is not installed: " + slot))
                 return false
             }
-            if (!isOk(call("enableGsi", oneShot, slot))) {
-                return false
-            }
-            val now: String = activeSlot()
-            if ((!now.isEmpty() && !now.equals(slot))) {
-                Log.w(TAG, (((("enableGsi() succeeded but the active slot reads '" + now) + "' instead of '") + slot) + "'."))
-            }
-            return true
+            return isOk(call("enableGsi", oneShot, slot))
         } catch (e: Exception) {
             Log.e(TAG, ("Unable to activate slot: " + slot), e)
             return false
@@ -257,17 +126,11 @@ class GsiSlotController {
      * <p>gsid removes the <em>active</em> slot, so the slot is made active first. Making a slot
      * active also enables it, so whatever was active and enabled before is put back afterwards.
      * Without this, removing one GSI could change which one the device boots.
-     *
-     * <p>When the slot list cannot be verified (shell) the caller must only pass slots it knows are
-     * installed. Removing a slot that does not exist would make gsid fall back to the default
-     * folder, and delete the default "dsu" slot instead. For that reason the active slot is
-     * re-read after the switch and the removal is dropped if it is not the slot asked for.
      */
     fun remove(slot: String): Boolean {
         try {
-            val authoritative: Boolean = isListAuthoritative()
             val slots: List<String> = installedSlots()
-            if ((authoritative && !slots.contains(slot))) {
+            if (!slots.contains(slot)) {
                 wipeSlotFiles(slot)
                 return true
             }
@@ -277,26 +140,22 @@ class GsiSlotController {
             if ((!slot.equals(previousActive) && !isOk(call("enableGsi", false, slot)))) {
                 // A half installed slot can refuse to be activated. With no other slot around,
                 // the plain removal cannot hit anything else, so it is safe to use.
-                if ((authoritative && (slots.size == 1))) {
+                if ((slots.size == 1)) {
                     removed = removeActive()
                 } else {
                     Log.e(TAG, ("Unable to select slot for removal: " + slot))
                     removed = false
                 }
-            } else if ((!authoritative && !slot.equals(activeSlot()))) {
-                Log.e(TAG, ("The active slot is not " + slot + ", not removing anything."))
-                restore(previousActive, previousEnabled, slot, authoritative)
-                return false
             } else {
                 removed = removeActive()
-                if ((!removed || (authoritative && installedSlots().contains(slot)))) {
+                if ((!removed || installedSlots().contains(slot))) {
                     removed = removeActive()
                 }
-                restore(previousActive, previousEnabled, slot, authoritative)
+                restore(previousActive, previousEnabled, slot)
             }
             // gsid is the one that should delete the slot. Whatever it left behind is wiped here,
             // so no folder with images stays in /data/gsi/dsu after a removal.
-            val gone: Boolean = (authoritative && !installedSlots().contains(slot))
+            val gone: Boolean = !installedSlots().contains(slot)
             if ((gone || removed)) {
                 wipeSlotFiles(slot)
             }
@@ -312,30 +171,20 @@ class GsiSlotController {
         return isOk(call("removeGsi"))
     }
 
-    private fun restore(previousActive: String, previousEnabled: Boolean, removedSlot: String, authoritative: Boolean) {
+    private fun restore(previousActive: String, previousEnabled: Boolean, removedSlot: String) {
         if ((previousActive.isEmpty() || previousActive.equals(removedSlot))) {
             return
         }
         try {
-            if ((authoritative && !installedSlots().contains(previousActive))) {
+            if (!installedSlots().contains(previousActive)) {
                 return
             }
             call("enableGsi", false, previousActive)
             if (!previousEnabled) {
-                disableGsi()
+                call("disableGsiInstall")
             }
         } catch (e: Exception) {
             Log.w(TAG, ("Unable to restore the active slot: " + previousActive), e)
-        }
-    }
-
-    // The method is named disableGsi in current gsid and disableGsiInstall in older releases
-    @Throws(ReflectiveOperationException::class)
-    private fun disableGsi() {
-        try {
-            call("disableGsi")
-        } catch (e: NoSuchMethodException) {
-            call("disableGsiInstall")
         }
     }
 
@@ -349,10 +198,6 @@ class GsiSlotController {
         private const val GSI_DATA_DIR: String = "/data/gsi/dsu"
 
         private const val GSI_METADATA_DIR: String = "/metadata/gsi/dsu"
-
-        private const val GSI_ACTIVE_FILE: String = "/metadata/gsi/dsu/active"
-
-        private const val INSTALL_DIR_FILE: String = "install_dir"
 
         private const val GSID_STATE_PROP: String = "init.svc.gsid"
 
@@ -417,26 +262,11 @@ class GsiSlotController {
             }
         }
 
-        private fun rootCause(error: Throwable): Throwable {
+        private fun describe(error: Throwable): String {
             var root: Throwable = error
             while (((root.cause != null) && (root.cause != root))) {
-                root = root.cause!!
+                root = root.cause!!!!
             }
-            return root
-        }
-
-        private fun isSecurityDenied(error: Throwable): Boolean {
-            return (rootCause(error) is SecurityException)
-        }
-
-        // Only root and system may touch the gsid folders. Shell leaves it all to gsid.
-        private fun canTouchGsiFiles(): Boolean {
-            val uid: Int = android.os.Process.myUid()
-            return ((uid == 0) || (uid == 1000))
-        }
-
-        private fun describe(error: Throwable): String {
-            val root: Throwable = rootCause(error)
             val message: String? = root.message
             return ((root.javaClass.getSimpleName()).toString() + (if ((message == null)) "" else (": " + message)))
         }
@@ -445,9 +275,6 @@ class GsiSlotController {
         private fun wipeSlotFiles(slot: String?) {
             // The slot ends up in a path, only the characters of a slot id are accepted
             if (((slot == null) || !slot!!.matches(Regex("[A-Za-z0-9_]+")))) {
-                return
-            }
-            if (!canTouchGsiFiles()) {
                 return
             }
             deleteRecursively(File(GSI_DATA_DIR, slot))
