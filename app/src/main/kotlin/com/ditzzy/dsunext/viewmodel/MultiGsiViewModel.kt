@@ -85,6 +85,7 @@ class MultiGsiViewModel : AndroidViewModel {
                 if (authoritative) {
                     registry.retainOnly(slots)
                 }
+                Log.i(TAG, (((((("refresh: authoritative=" + authoritative) + " gsidActive=") + gsidActive) + " listed=") + slots) + " registry=") + registry.slotIds())
                 val selected: String = registry.getSelected()
                 val active: String = (if ((!selected.isEmpty() && slots.contains(selected))) selected else gsidActive)
                 val items: MutableList<MultiGsiState.Item> = ArrayList<MultiGsiState.Item>()

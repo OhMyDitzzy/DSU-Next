@@ -696,6 +696,15 @@ class HomeViewModel : AndroidViewModel {
         val multiGsi: Boolean = isMultiGsiActive()
         var slot: String = ""
         if (multiGsi) {
+            // The installation before this one may have finished unnoticed (no log permission, app closed).
+            // Its slot is still the active one right now, which is the proof the registry needs. After this
+            // installation the previous slot is no longer active, so this is the last chance to register it.
+            try {
+                val active: String = PrivilegedProvider.getService().getActiveSlot()
+                slotRegistry.promotePending(active, false)
+            } catch (e: RemoteException) {
+                Log.w(TAG, "Unable to confirm the previous installation.", e)
+            }
             slot = resolveInstallSlot(true)
             // Only a real GSI once the installation is done, see finalizeInstalledSlot()
             slotRegistry.setPending(GsiSlotInfo(slot, resolveGsiLabel(slot), session.getUserSelection().getSelectedFileName(), System.currentTimeMillis()))

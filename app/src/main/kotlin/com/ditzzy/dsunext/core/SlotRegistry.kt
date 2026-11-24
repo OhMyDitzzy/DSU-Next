@@ -142,22 +142,34 @@ class SlotRegistry {
         preferences.edit().remove(KEY_PENDING).apply()
     }
 
+    /** The slot is already registered. */
+    @Synchronized
+    fun isKnown(slot: String): Boolean {
+        return read().has(slot)
+    }
+
     /**
-     * Turns the pending GSI into a registered one.
+     * Turns the pending GSI into a registered one, once there is proof that it exists: installing a
+     * GSI makes its slot the active one, so the pending slot being the active slot is that proof.
      *
-     * @param activeSlot the slot gsid has as active. Installing a GSI makes its slot the active one.
-     * @param force      the installation is known to be finished. Then the active slot is the one
-     *                   that was installed even when it is not the slot that was asked for, which
-     *                   happens on a DSU app that ignores KEY_DSU_SLOT and installs to "dsu".
+     * <p>Nothing is ever registered under a slot that is not the pending one, with a single
+     * exception: a DSU app that ignores KEY_DSU_SLOT installs to the default slot, so when the
+     * installation is known to be finished (`finished`) and the active slot is the default one, the
+     * GSI is registered there. Any other active slot is an older installation (the answer can lag
+     * behind), and registering the new GSI under it would overwrite that older GSI's entry.
+     *
      * @return the slot that was registered, empty when nothing was promoted.
      */
     @Synchronized
-    fun promotePending(activeSlot: String, force: Boolean): String {
+    fun promotePending(activeSlot: String, finished: Boolean): String {
         val pending: GsiSlotInfo? = getPending()
         if ((pending == null || activeSlot.isEmpty())) {
             return ""
         }
-        if ((!force && !activeSlot.equals(pending!!.getSlot()))) {
+        val sameSlot: Boolean = activeSlot.equals(pending!!.getSlot())
+        val ignoredSlot: Boolean = (finished && activeSlot.equals(DEFAULT_SLOT) && !isKnown(activeSlot))
+        Log.i(TAG, (((((("promotePending: pending=" + pending!!.getSlot()) + " active=") + activeSlot) + " finished=") + finished) + " -> ") + (if (sameSlot || ignoredSlot) "register" else "wait"))
+        if ((!sameSlot && !ignoredSlot)) {
             return ""
         }
         put(GsiSlotInfo(activeSlot, pending!!.getLabel(), pending!!.getSourceName(), pending!!.getInstalledAt()))
@@ -197,6 +209,8 @@ class SlotRegistry {
         private const val KEY_SLOTS: String = "slots"
 
         private const val KEY_SELECTED: String = "selected"
+
+        private const val DEFAULT_SLOT: String = "dsu"
 
         private const val KEY_PENDING: String = "pending"
 
