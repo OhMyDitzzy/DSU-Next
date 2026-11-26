@@ -209,6 +209,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
             android:layout_margin="16dp"
+            android:includeFontPadding="false"
             android:text="@string/fm_create"
             app:elevation="0dp"
             app:icon="@drawable/ic_add" />

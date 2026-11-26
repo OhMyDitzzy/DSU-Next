@@ -4,4 +4,8 @@
     <dimen name="section_gap">24dp</dimen>
     <dimen name="card_padding">20dp</dimen>
     <dimen name="fab_clearance">112dp</dimen>
+    <!-- Dialog content that ends in a button row only needs a little space, the row adds its own. -->
+    <dimen name="dialog_bottom_with_actions">8dp</dimen>
+    <!-- Dialogs with no buttons (a running job) need the full 24dp of dialog padding. -->
+    <dimen name="dialog_bottom_no_actions">24dp</dimen>
 </resources>

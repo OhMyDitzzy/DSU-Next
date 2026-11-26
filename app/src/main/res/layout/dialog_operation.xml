@@ -6,7 +6,7 @@
     android:orientation="vertical"
     android:paddingHorizontal="24dp"
     android:paddingTop="24dp"
-    android:paddingBottom="8dp">
+    android:paddingBottom="@dimen/dialog_bottom_no_actions">
 
     <TextView
         android:id="@+id/op_message"

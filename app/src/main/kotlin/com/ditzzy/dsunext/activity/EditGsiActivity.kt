@@ -350,7 +350,7 @@ open class EditGsiActivity : AppCompatActivity() {
         val content: LinearLayout = LinearLayout(this)
         content.setOrientation(LinearLayout.VERTICAL)
         val padding: Int = ((24 * getResources().getDisplayMetrics().density)).toInt()
-        content.setPadding(padding, (padding / 3), padding, 0)
+        content.setPadding(padding, (padding / 3), padding, getResources().getDimensionPixelSize(R.dimen.dialog_bottom_with_actions))
         addInfoRow(content, R.drawable.ic_folder_open, R.string.gsi_info_path, info!!.`get`("path"))
         if ("recovery".equals(info!!.`get`("state"))) {
             addInfoRow(content, R.drawable.ic_warning, R.string.gsi_info_state, getString(R.string.fm_recovery))
@@ -429,6 +429,9 @@ open class EditGsiActivity : AppCompatActivity() {
         operationBinding = DialogOperationBinding.inflate(getLayoutInflater())
         shownType = operation.type
         shownStatus = operation.status
+        // A running job has no buttons, so the content has to supply the bottom space of the dialog itself.
+        val root: View = operationBinding!!.getRoot()
+        root.setPadding(root.getPaddingLeft(), root.getPaddingTop(), root.getPaddingRight(), getResources().getDimensionPixelSize((if ((operation.status == Operation.Status.RUNNING)) R.dimen.dialog_bottom_no_actions else R.dimen.dialog_bottom_with_actions)))
         val builder: MaterialAlertDialogBuilder = MaterialAlertDialogBuilder(this).setView(operationBinding!!.getRoot()).setCancelable(false)
         when (operation.status) {
             EditGsiViewModel.Operation.Status.DONE -> {

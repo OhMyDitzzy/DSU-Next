@@ -62,6 +62,11 @@ class GsiFileManagerActivity : AppCompatActivity() {
     /** The folder the breadcrumbs currently show, used to scroll to the top only when it changes. */
     private var renderedPath: String? = null
 
+    // Set when the folder changed, the new rows slide in once loading has finished.
+    private var pendingEnter: Boolean = false
+
+    private var enterDirection: Int = 0
+
     // A folder that opens fast should not flash a spinner, so the loading state only appears after a short wait.
     private val showLoading: Runnable = Runnable {
         setLoadingVisible(true)
@@ -222,7 +227,22 @@ class GsiFileManagerActivity : AppCompatActivity() {
             overlay.postDelayed(showSlowProgress, SLOW_PROGRESS_DELAY_MS)
         } else {
             setLoadingVisible(false)
+            if (pendingEnter) {
+                pendingEnter = false
+                playEnter(enterDirection)
+            }
         }
+    }
+
+    /** New rows slide in from the side the user navigated towards, same depth just fades. */
+    private fun playEnter(direction: Int) {
+        val list: View = binding!!.files
+        val rtl: Boolean = (getResources().getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_RTL)
+        val shift: Float = (dp(ENTER_SHIFT_DP) * direction * (if (rtl) -1 else 1)).toFloat()
+        list.animate().cancel()
+        list.setTranslationX(shift)
+        list.setAlpha(0f)
+        list.animate().translationX(0f).alpha(1f).setDuration(ENTER_MS).setInterpolator(android.view.animation.PathInterpolator(0.05f, 0.7f, 0.1f, 1f)).start()
     }
 
     private fun setLoadingVisible(visible: Boolean) {
@@ -235,7 +255,9 @@ class GsiFileManagerActivity : AppCompatActivity() {
             overlay.animate().alpha(1f).setDuration(FADE_MS).start()
             list.animate().alpha(DIMMED_LIST_ALPHA).setDuration(FADE_MS).start()
         } else {
-            list.animate().alpha(1f).setDuration(FADE_MS).start()
+            if (!pendingEnter) {
+                list.animate().alpha(1f).setDuration(FADE_MS).start()
+            }
             if ((overlay.getVisibility() == View.VISIBLE)) {
                 overlay.animate().alpha(0f).setDuration(FADE_MS).withEndAction({
                     overlay.setVisibility(View.GONE)
@@ -245,8 +267,13 @@ class GsiFileManagerActivity : AppCompatActivity() {
     }
 
     private fun breadcrumbs(path: String) {
-        val changed: Boolean = !path.equals(renderedPath)
+        val previous: String? = renderedPath
+        val changed: Boolean = !path.equals(previous)
         renderedPath = path
+        if ((changed && (previous != null))) {
+            pendingEnter = true
+            enterDirection = Integer.signum((depth(path) - depth(previous!!)))
+        }
         binding!!.folderTitle.setText((if (path.isEmpty()) getString(R.string.fm_image_root) else path.substring((path.lastIndexOf('/') + 1))))
         binding!!.breadcrumbs.removeAllViews()
         crumb(getString(R.string.fm_image_root), "", path.isEmpty())
@@ -785,6 +812,14 @@ class GsiFileManagerActivity : AppCompatActivity() {
         private const val FADE_MS: Long = 120L
 
         private const val DIMMED_LIST_ALPHA: Float = 0.35f
+
+        private const val ENTER_MS: Long = 260L
+
+        private const val ENTER_SHIFT_DP: Int = 32
+
+        private fun depth(path: String): Int {
+            return (if (path.isEmpty()) 0 else (path.count({ c -> (c == '/') }) + 1))
+        }
 
         private fun validName(name: String): Boolean {
             return (((!name.equals(".") && !name.equals("..")) && !name.contains("/")) && name.codePoints().noneMatch({ c ->

@@ -4,7 +4,8 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:paddingHorizontal="24dp"
-    android:paddingTop="8dp">
+    android:paddingTop="8dp"
+    android:paddingBottom="@dimen/dialog_bottom_with_actions">
 
     <TextView
         android:id="@+id/import_source"
