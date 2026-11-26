@@ -153,7 +153,8 @@
             android:gravity="center"
             android:orientation="vertical"
             android:padding="32dp"
-            android:paddingBottom="112dp">
+            android:paddingBottom="112dp"
+            android:visibility="gone">
 
             <com.google.android.material.card.MaterialCardView
                 style="?attr/materialCardViewFilledStyle"
@@ -184,6 +185,22 @@
                 android:textAppearance="?attr/textAppearanceBodyMedium"
                 android:textColor="?attr/colorOnSurfaceVariant" />
         </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/folder_loading"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:alpha="0"
+            android:importantForAccessibility="no"
+            android:paddingBottom="112dp"
+            android:visibility="gone">
+
+            <com.google.android.material.loadingindicator.LoadingIndicator
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:contentDescription="@string/fm_loading_folder" />
+        </FrameLayout>
 
         <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
             android:id="@+id/create"
@@ -235,6 +252,9 @@
                     android:id="@+id/paste"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:minHeight="48dp"
                     android:text="@string/fm_paste"
                     app:icon="@drawable/ic_paste" />
             </LinearLayout>

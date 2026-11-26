@@ -4,6 +4,7 @@
     <string name="fm_title">GSI files</string>
     <string name="fm_empty">This folder is empty</string>
     <string name="fm_working">Working…</string>
+    <string name="fm_loading_folder">Loading folder</string>
     <string name="fm_progress">%1$s\n%2$s processed · %3$d changes</string>
     <string name="fm_new_file">New file</string>
     <string name="fm_new_folder">New folder</string>

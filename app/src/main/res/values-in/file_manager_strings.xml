@@ -4,6 +4,7 @@
     <string name="fm_title">File GSI</string>
     <string name="fm_empty">Folder ini kosong</string>
     <string name="fm_working">Sedang bekerja…</string>
+    <string name="fm_loading_folder">Memuat folder</string>
     <string name="fm_progress">%1$s\n%2$s diproses · %3$d perubahan</string>
     <string name="fm_new_file">File baru</string>
     <string name="fm_new_folder">Folder baru</string>

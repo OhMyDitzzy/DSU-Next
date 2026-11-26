@@ -8,6 +8,9 @@
     <style name="Widget.DsuNext.FileBreadcrumb" parent="Widget.Material3.Button.TextButton">
         <item name="android:minWidth">48dp</item>
         <item name="android:minHeight">48dp</item>
+        <item name="android:maxWidth">200dp</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">middle</item>
         <item name="android:insetTop">4dp</item>
         <item name="android:insetBottom">4dp</item>
         <item name="android:paddingLeft">16dp</item>

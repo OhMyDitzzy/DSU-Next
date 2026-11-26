@@ -59,6 +59,21 @@ class GsiFileManagerActivity : AppCompatActivity() {
 
     private var saveFile: ActivityResultLauncher<String>? = null
 
+    /** The folder the breadcrumbs currently show, used to scroll to the top only when it changes. */
+    private var renderedPath: String? = null
+
+    // A folder that opens fast should not flash a spinner, so the loading state only appears after a short wait.
+    private val showLoading: Runnable = Runnable {
+        setLoadingVisible(true)
+    }
+
+    // Very slow listings get the full progress card, with its Cancel button, as before.
+    private val showSlowProgress: Runnable = Runnable {
+        if (((model != null) && model!!.isBusy() && model!!.isListing())) {
+            binding!!.operation.setVisibility(View.VISIBLE)
+        }
+    }
+
     override fun onCreate(state: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(state)
@@ -134,16 +149,22 @@ class GsiFileManagerActivity : AppCompatActivity() {
             renderControls()
         })
         model!!.getDirectory().observe(this, this::breadcrumbs)
+        model!!.getLoading().observe(this, { loading ->
+            renderLoading(loading)
+        })
         model!!.getBusy().observe(this, { busy ->
-            binding!!.operation.setVisibility((if (busy) View.VISIBLE else View.GONE))
+            // Opening a folder is not a file operation: it must not push the list down with a progress card
+            // or grey out the controls, taps are already ignored while busy.
+            val working: Boolean = (busy && !model!!.isListing())
+            binding!!.operation.setVisibility((if (working) View.VISIBLE else View.GONE))
             binding!!.progress.setText("")
             binding!!.paste.setEnabled(!busy)
             binding!!.clearClipboard.setEnabled(!busy)
-            binding!!.toolbar.getMenu().findItem(R.id.fm_refresh).setEnabled(!busy)
+            binding!!.toolbar.getMenu().findItem(R.id.fm_refresh).setEnabled(!working)
             run {
                 var i: Int = 0
                 while ((i < binding!!.breadcrumbs.getChildCount())) {
-                    binding!!.breadcrumbs.getChildAt(i)!!.setEnabled(!busy)
+                    binding!!.breadcrumbs.getChildAt(i)!!.setEnabled(!working)
                     i++
                 }
             }
@@ -170,6 +191,10 @@ class GsiFileManagerActivity : AppCompatActivity() {
     }
 
     protected override fun onDestroy() {
+        if ((binding != null)) {
+            binding!!.folderLoading.removeCallbacks(showLoading)
+            binding!!.folderLoading.removeCallbacks(showSlowProgress)
+        }
         if ((dialog != null)) {
             dialog!!.dismiss()
         }
@@ -183,11 +208,45 @@ class GsiFileManagerActivity : AppCompatActivity() {
         val label: String? = model!!.getClipboardLabel().getValue()
         val clipboard: Boolean = ((label != null) && !label!!.isEmpty())
         binding!!.clipboard.setVisibility((if (clipboard) View.VISIBLE else View.GONE))
-        binding!!.create.setVisibility((if ((!clipboard && !model!!.isBusy())) View.VISIBLE else View.GONE))
+        val working: Boolean = (model!!.isBusy() && !model!!.isListing())
+        binding!!.create.setVisibility((if ((!clipboard && !working)) View.VISIBLE else View.GONE))
         binding!!.empty.setVisibility((if ((adapter!!.isEmpty() && !model!!.isBusy())) View.VISIBLE else View.GONE))
     }
 
+    private fun renderLoading(loading: Boolean) {
+        val overlay: View = binding!!.folderLoading
+        overlay.removeCallbacks(showLoading)
+        overlay.removeCallbacks(showSlowProgress)
+        if (loading) {
+            overlay.postDelayed(showLoading, LOADING_DELAY_MS)
+            overlay.postDelayed(showSlowProgress, SLOW_PROGRESS_DELAY_MS)
+        } else {
+            setLoadingVisible(false)
+        }
+    }
+
+    private fun setLoadingVisible(visible: Boolean) {
+        val overlay: View = binding!!.folderLoading
+        val list: View = binding!!.files
+        overlay.animate().cancel()
+        list.animate().cancel()
+        if (visible) {
+            overlay.setVisibility(View.VISIBLE)
+            overlay.animate().alpha(1f).setDuration(FADE_MS).start()
+            list.animate().alpha(DIMMED_LIST_ALPHA).setDuration(FADE_MS).start()
+        } else {
+            list.animate().alpha(1f).setDuration(FADE_MS).start()
+            if ((overlay.getVisibility() == View.VISIBLE)) {
+                overlay.animate().alpha(0f).setDuration(FADE_MS).withEndAction({
+                    overlay.setVisibility(View.GONE)
+                }).start()
+            }
+        }
+    }
+
     private fun breadcrumbs(path: String) {
+        val changed: Boolean = !path.equals(renderedPath)
+        renderedPath = path
         binding!!.folderTitle.setText((if (path.isEmpty()) getString(R.string.fm_image_root) else path.substring((path.lastIndexOf('/') + 1))))
         binding!!.breadcrumbs.removeAllViews()
         crumb(getString(R.string.fm_image_root), "", path.isEmpty())
@@ -206,7 +265,10 @@ class GsiFileManagerActivity : AppCompatActivity() {
         binding!!.breadcrumbScroll.post({
             binding!!.breadcrumbScroll.fullScroll(View.FOCUS_RIGHT)
         })
-        binding!!.files.setSelection(0)
+        if (changed) {
+            // Refreshing the same folder, for example after editing a file, keeps the scroll position.
+            binding!!.files.setSelection(0)
+        }
     }
 
     private fun crumb(title: String, path: String, current: Boolean) {
@@ -215,6 +277,7 @@ class GsiFileManagerActivity : AppCompatActivity() {
         button.setBackgroundTintList(ColorStateList.valueOf(MaterialColors.getColor(button, (if (current) com.google.android.material.R.attr.colorSecondaryContainer else com.google.android.material.R.attr.colorSurface))))
         button.setTextColor(MaterialColors.getColor(button, (if (current) com.google.android.material.R.attr.colorOnSecondaryContainer else com.google.android.material.R.attr.colorOnSurfaceVariant)))
         button.setContentDescription(getString(R.string.fm_open_folder, title))
+        androidx.appcompat.widget.TooltipCompat.setTooltipText(button, title)
         button.setEnabled(!model!!.isBusy())
         button.setOnClickListener({ v ->
             if ((!model!!.isBusy() && !current)) {
@@ -714,6 +777,14 @@ class GsiFileManagerActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_WORKSPACE: String = "workspace"
+
+        private const val LOADING_DELAY_MS: Long = 150L
+
+        private const val SLOW_PROGRESS_DELAY_MS: Long = 1500L
+
+        private const val FADE_MS: Long = 120L
+
+        private const val DIMMED_LIST_ALPHA: Float = 0.35f
 
         private fun validName(name: String): Boolean {
             return (((!name.equals(".") && !name.equals("..")) && !name.contains("/")) && name.codePoints().noneMatch({ c ->

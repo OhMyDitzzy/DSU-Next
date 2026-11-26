@@ -36,6 +36,12 @@ class GsiFileManagerViewModel : AndroidViewModel {
 
     private val busy: MutableLiveData<Boolean> = MutableLiveData<Boolean>(false)
 
+    /** True only while a folder listing is in flight, file operations keep using [busy] alone. */
+    private val loading: MutableLiveData<Boolean> = MutableLiveData<Boolean>(false)
+
+    @Volatile
+    private var listing: Boolean = false
+
     private val progress: MutableLiveData<OperationProgress?> = MutableLiveData<OperationProgress?>()
 
     private val outcomes: MutableLiveData<Event<Outcome>> = MutableLiveData<Event<Outcome>>()
@@ -78,6 +84,15 @@ class GsiFileManagerViewModel : AndroidViewModel {
 
     fun getBusy(): LiveData<Boolean> {
         return busy
+    }
+
+    fun getLoading(): LiveData<Boolean> {
+        return loading
+    }
+
+    /** True while the current job only reads a folder, so the UI can skip the heavy progress card. */
+    fun isListing(): Boolean {
+        return listing
     }
 
     fun getProgress(): LiveData<OperationProgress?> {
@@ -183,12 +198,15 @@ class GsiFileManagerViewModel : AndroidViewModel {
         if ((isBusy() || cleared)) {
             return
         }
+        listing = (request is FileRequest.ListDirectory)
+        loading.setValue(listing)
         busy.setValue(true)
         progress.setValue(null)
         val token: CancellationToken = CancellationToken()
         cancellation = token
         WorkspaceJobs.executor().execute(callback3@ {
             if (cleared) {
+                loading.postValue(false)
                 busy.postValue(false)
                 return@callback3
             }
@@ -198,8 +216,10 @@ class GsiFileManagerViewModel : AndroidViewModel {
                 if ((request is FileRequest.ListDirectory)) {
                     if ((result is FileResult.Success)) {
                         currentDirectory = (request as FileRequest.ListDirectory).path
-                        directory.postValue(currentDirectory)
+                        // Rows first, then the path: the screen scrolls to the top when the path changes
+                        // and that has to happen after the new rows are in place.
                         entries.postValue(((result as FileResult.Success).value as FileValue.Listing).entries)
+                        directory.postValue(currentDirectory)
                     } else {
                         outcomes.postValue(Event<Outcome>(Outcome(request!!, result, null)))
                     }
@@ -209,9 +229,9 @@ class GsiFileManagerViewModel : AndroidViewModel {
                         clipboardLabel.postValue("")
                     }
                     try {
-                        val listing: FileResult = session.execute(FileRequest.ListDirectory(currentDirectory), CancellationToken(), null)
-                        if ((listing is FileResult.Success)) {
-                            entries.postValue(((listing as FileResult.Success).value as FileValue.Listing).entries)
+                        val refreshed: FileResult = session.execute(FileRequest.ListDirectory(currentDirectory), CancellationToken(), null)
+                        if ((refreshed is FileResult.Success)) {
+                            entries.postValue(((refreshed as FileResult.Success).value as FileValue.Listing).entries)
                         }
                     } catch (ignored: IOException) {
 
@@ -222,6 +242,7 @@ class GsiFileManagerViewModel : AndroidViewModel {
             } catch (error: Exception) {
                 error(request, error)
             } finally {
+                loading.postValue(false)
                 busy.postValue(false)
             }
         })
